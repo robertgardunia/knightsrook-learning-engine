@@ -5,6 +5,7 @@ import { loadConfig } from "./lib/config"
 import { loadCoursePackage } from "./lib/coursePackageLoader"
 import { LessonInterpreter, type LessonInterpreterHooks } from "./lesson/lessonInterpreter"
 import { registerLoad } from "./scene/loadProgress"
+import { createXapiRelay } from "./telemetry/xapiClient"
 import { ThemeProvider } from "./theme/themeProvider"
 
 async function main() {
@@ -17,6 +18,16 @@ async function main() {
 
   const themeProvider = new ThemeProvider()
   themeProvider.apply(course.theme)
+
+  // Activity IDs are course-specific data, not code — matches the six-input
+  // course package contract. Real IDs land here once course.json grows an
+  // "activities" field; using the lesson id as a stand-in until then.
+  const xapi = createXapiRelay(config.xapiSocketUrl, "learning-engine", {
+    [course.lesson.id]: {
+      id: `https://learning-demo.knightsrook.com/activities/${course.lesson.id}`,
+      objectType: "Activity",
+    },
+  })
 
   // Room GLB import lands here once a real asset exists — see roomConvention.ts
   // for the spawn-node contract every room GLB must satisfy.
@@ -42,6 +53,13 @@ async function main() {
     showFeedback: async (feedback) => {
       console.log(`[feedback] ${feedback}`)
     },
+    emitXapi: (verb, beatId) => {
+      xapi.emit(course.lesson.id, {
+        id: `http://adlnet.gov/expapi/verbs/${verb}`,
+        display: { "en-US": verb },
+      })
+      void beatId
+    },
   }
 
   const interpreter = new LessonInterpreter(course.lesson, hooks)
@@ -49,8 +67,6 @@ async function main() {
 
   engine.runRenderLoop(() => scene.render())
   window.addEventListener("resize", () => engine.resize())
-
-  void config
 }
 
 main()

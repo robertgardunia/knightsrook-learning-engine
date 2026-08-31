@@ -1,0 +1,13 @@
+{
+  "name": "@learning-engine/xapi-relay",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "tsn-node-kit": "^0.1.31"
+  }
+}

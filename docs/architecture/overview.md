@@ -16,6 +16,7 @@ environment two costs hours, not a rebuild. Full spec:
 |------------|--------------------------------|------------|----------------|
 | client     | Babylon.js + Vite + TS         | 5320       | Renders the course: room, avatar, lesson interpreter, theme provider |
 | retrieval  | FastAPI + asyncpg              | 5110       | GraphRAG-forward query over the trusted substrate (corpus documents) |
+| xapi-relay | Node + tsn-node-kit            | 5040       | Holds LRS credentials server-side, receives xAPI statements from the browser relay — near line-for-line port of garage's relay-server.js |
 | db         | Postgres 16 + pgvector + AGE   | (internal) | substrate/runtime schema split — corpus + progress |
 
 ## Course package (the entire assembly surface)

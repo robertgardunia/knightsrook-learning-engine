@@ -12,7 +12,8 @@
     "@babylonjs/core": "^7.35.0",
     "@babylonjs/loaders": "^7.35.0",
     "@learning-engine/shared-types": "*",
-    "socket.io-client": "^4.7.5"
+    "socket.io-client": "^4.7.5",
+    "tsn-node-kit": "^0.1.31"
   },
   "devDependencies": {
     "typescript": "^5.5.3",

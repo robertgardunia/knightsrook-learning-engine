@@ -15,6 +15,8 @@ learning-demo.knightsrook.com · full spec in Knightsrook MCP:
   substrate (currently stubbed — see [docs/architecture/overview.md](docs/architecture/overview.md)).
 - **packages/shared-types/** — TypeScript types for the course package format
   shared between client and retrieval.
+- **packages/xapi-relay/** — Node process holding LRS credentials, reusing
+  `tsn-node-kit`'s `XApiRelay` (same pattern as `knightsrook-garage/relay-server.js`).
 - **db/** — Postgres 16 + pgvector + Apache AGE.
 
 ## Quickstart
@@ -23,7 +25,8 @@ learning-demo.knightsrook.com · full spec in Knightsrook MCP:
 cp .env.example .env   # fill in values
 npm install
 npm run build:types
-npm run dev:client        # Babylon client dev server, http://localhost:5320
+npm run dev:client            # Babylon client dev server, http://localhost:5320
+npm run start:xapi-relay      # xAPI relay, ws://localhost:5040
 docker compose up --build retrieval db   # retrieval API + Postgres
 ```
 
