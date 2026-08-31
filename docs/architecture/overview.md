@@ -21,8 +21,9 @@ environment two costs hours, not a rebuild. Full spec:
 
 ## Course package (the entire assembly surface)
 
-Six inputs, all JSON config under `packages/client/public/courses/<id>/`, none
-requiring a source edit: room GLB, avatar GLB (or primitive stand-in), voice
+Six inputs, all JSON config under `public/courses/<id>/` (repo root, not
+nested inside `packages/client` — see [public/README.md](../../public/README.md)),
+none requiring a source edit: room GLB, avatar GLB (or primitive stand-in), voice
 (ElevenLabs agent + voice id), theme tokens, lesson file (beats/choices), and
 corpus (documents for retrieval). Types: `packages/shared-types/src/`.
 

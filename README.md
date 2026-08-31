@@ -18,6 +18,10 @@ learning-demo.knightsrook.com · full spec in Knightsrook MCP:
 - **packages/xapi-relay/** — Node process holding LRS credentials, reusing
   `tsn-node-kit`'s `XApiRelay` (same pattern as `knightsrook-garage/relay-server.js`).
 - **db/** — Postgres 16 + pgvector + Apache AGE.
+- **public/** — repo-root, not owned by any one package: course package JSON
+  (`public/courses/`) and the shared asset library (`public/assets/` — rooms,
+  avatars, animations, audio, textures, UI, staged corpus documents). See
+  [public/README.md](public/README.md).
 
 ## Quickstart
 
@@ -35,3 +39,4 @@ docker compose up --build retrieval db   # retrieval API + Postgres
 - [docs/architecture/overview.md](docs/architecture/overview.md) — services, course package schema, key flows, ADRs
 - [docs/architecture/room-convention.md](docs/architecture/room-convention.md) — the spawn-node contract every room GLB must satisfy
 - [docs/reuse-log.md](docs/reuse-log.md) — what was ported from `knightsrook-garage`, what changed, and what should be retrofitted back
+- [public/README.md](public/README.md) — the standardized asset folder structure and why it lives at the repo root, not inside `packages/client`
