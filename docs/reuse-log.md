@@ -1,10 +1,22 @@
 # Reuse log — knightsrook-garage → knightsrook-learning-engine
 
-Purpose: this project exists partly to find where knightsrook-garage's course-
-specific code is actually already generic, and where it needs to become
-generic. Every entry below is a candidate for a retroactive change to the
-garage — either "port this back as-is, it's already clean" or "the garage
-version needs this adjustment too."
+## Framing
+
+The garage was originally born from a procedural engine — it had
+"enginification" in its bones. It has since progressed a great deal as its
+own course (kart-building), and that progress pulled parts of it toward being
+course-specific rather than engine-shaped. This project is not just a place to
+copy code from the garage; it is the pressure test that shows exactly where
+that drift happened and what it costs to reverse, so the garage can be
+realigned back toward its engine roots afterward.
+
+Read each entry below as a drift audit, not just a port log: an entry where
+nothing needed to change (#1, #2) is a place the garage never drifted; an
+entry with a real "garage retrofit action" (#3, #5) is a place it did.
+
+Every entry is a candidate for a retroactive change to the garage — either
+"port this back as-is, it's already clean" or "the garage version needs this
+adjustment too."
 
 Format per entry: **source file → what changed → garage retrofit action.**
 
@@ -138,6 +150,31 @@ back into the garage as TS — keep the garage's existing JS convention intact.
 If a module proves worth sharing literally (not just conceptually) between the
 two repos, consider a third shared package published as compiled JS, rather
 than migrating the garage's build tooling.
+
+## Reuse sources outside the garage
+
+Two published packages the garage itself already depends on, discovered while
+correcting entry #3 — worth stating explicitly since they aren't "garage
+code" and could otherwise be missed by anyone reading this log expecting only
+garage-sourced entries.
+
+**`tsn-node-kit`** (`/d/workspace-tsn/tsn-node-kit`) — identity provisioning
+and xAPI relay for TSN activity nodes. Batcher → Catcher → Relay pattern.
+`XApiRelay` is reused directly (#3 above). `CodeBatcher`/`CodeCaptureService`
+(event-code QR-scan provisioning) are NOT currently reused here — they assume
+a walk-up-and-claim-a-code model that doesn't obviously fit Jeffrey's
+staff-training context (persistent accounts, not anonymous kiosk codes).
+Revisit if/when the engine needs multi-tenant identity provisioning.
+
+**`tsn-xapi-handler`** (`/d/workspace-tsn/tsn-xapi-handler`) — deployed HTTP
+service (not an npm dependency): migrates xAPI statements from a temporary
+event-code actor to a permanent `tsn_id` actor on registration, and exposes a
+`/query` endpoint for arbitrary xAPI queries against the LRS. Actor migration
+likely doesn't apply here (same reasoning as CodeBatcher above); the `/query`
+endpoint is a plausible fit for the spec's RBT 5/180-day training-window
+tracking feature. Not wired up. Whether the full xAPI chain (garage/engine →
+relay → LRS → this handler) actually works end-to-end in production is
+unconfirmed — flagged, not assumed.
 
 ## Not yet examined
 
