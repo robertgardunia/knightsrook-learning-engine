@@ -1,0 +1,14 @@
+{
+  "name": "knightsrook-learning-engine",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "packages/client",
+    "packages/shared-types"
+  ],
+  "scripts": {
+    "dev:client": "npm run dev --workspace=packages/client",
+    "build:client": "npm run build --workspace=packages/client",
+    "build:types": "npm run build --workspace=packages/shared-types"
+  }
+}
