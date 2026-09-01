@@ -8,9 +8,13 @@
     "packages/xapi-relay"
   ],
   "scripts": {
+    "dev": "concurrently -n xapi-relay,client -c cyan,green \"npm run start:xapi-relay\" \"npm run dev:client\"",
     "dev:client": "npm run dev --workspace=packages/client",
     "build:client": "npm run build --workspace=packages/client",
     "build:types": "npm run build --workspace=packages/shared-types",
     "start:xapi-relay": "npm run start --workspace=packages/xapi-relay"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5"
   }
 }
