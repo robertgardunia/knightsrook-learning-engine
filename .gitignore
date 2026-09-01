@@ -1,6 +1,7 @@
 .env
 node_modules/
 dist/
+*.tsbuildinfo
 __pycache__/
 *.pyc
 .venv/
@@ -10,3 +11,5 @@ uv.lock
 pg_data/
 *.log
 .DS_Store
+archive/
+.claude/
