@@ -18,6 +18,11 @@ than silently defaulting to the GLB's raw origin.
 A `CoursePackage.room.glbUrl` for this room would be
 `/assets/rooms/sci-fi-lab/room.glb`.
 
-No rooms are checked in yet — see `project:learning-demo:research-open` #3
-(poly counts/texture sizes/file sizes for Sketchfab candidates still unknown)
-before committing to one.
+`sci-fi-lab/room.glb` is the first real room, wired into the precursor-demo
+course package. It's a Sketchfab download with no authored `SpawnPoint`
+node — turns out most downloaded assets don't have one, and re-exporting
+every find just to add an empty defeats the point of the convention. See
+[docs/architecture/room-convention.md](../../../docs/architecture/room-convention.md)'s
+"Revision from the original spec" note: `roomConvention.ts` now synthesizes
+a spawn point from the bounding-box center when the node is missing, with a
+loud console warning, rather than hard-failing.

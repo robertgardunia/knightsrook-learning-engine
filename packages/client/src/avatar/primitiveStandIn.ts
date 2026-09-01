@@ -18,10 +18,12 @@ export class PrimitiveStandIn {
     const body = MeshBuilder.CreateCapsule(`${name}-body`, { height: 1.6, radius: 0.3 }, scene)
     body.position.y = 0.8
     body.parent = this.root
+    body.checkCollisions = true
 
     const head = MeshBuilder.CreateSphere(`${name}-head`, { diameter: 0.4 }, scene)
     head.position.y = 1.75
     head.parent = this.root
+    head.checkCollisions = true
 
     const material = new StandardMaterial(`${name}-mat`, scene)
     material.diffuseColor = new Color3(0.6, 0.6, 0.65)

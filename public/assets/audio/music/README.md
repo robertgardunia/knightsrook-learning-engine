@@ -8,6 +8,9 @@ audio/music/
   vulcan-ambient.mp3
 ```
 
-Nothing checked in yet — not currently part of the spec's demo (precursor
-lesson has no music requirement). Reserved for when a course actually needs
-one, so the convention exists before the first real request for it.
+`sci-fi-lab-ambient.mp3` is the first real ambient bed, referenced by the
+precursor-demo course package via `RoomConfig.ambientAudioUrl` (added to
+`CoursePackage` for this — `packages/shared-types/src/course-package.ts`).
+Played on a loop via Babylon's `Sound` API in `main.ts`; browser autoplay
+policy may hold it muted/suspended until the first user interaction with the
+page, which is expected, not a bug.

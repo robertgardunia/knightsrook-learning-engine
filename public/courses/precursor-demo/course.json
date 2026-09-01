@@ -1,8 +1,10 @@
 {
   "id": "precursor-demo",
   "room": {
-    "glbUrl": "",
-    "spawnNode": "SpawnPoint"
+    "glbUrl": "/assets/rooms/sci-fi-lab/room.glb",
+    "spawnNode": "SpawnPointPlayer",
+    "avatarSpawnNode": "SpawnPointMentor",
+    "ambientAudioUrl": "/assets/audio/music/sci-fi-lab-ambient.mp3"
   },
   "avatar": {
     "animationSlots": { "idle": 0, "talk": 1, "greet": 2, "explain": 3, "point": 4 }

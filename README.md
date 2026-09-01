@@ -10,9 +10,13 @@ learning-demo.knightsrook.com · full spec in Knightsrook MCP:
 ## Stack
 
 - **packages/client/** — Babylon.js + Vite + TypeScript. Lesson interpreter,
-  theme provider, primitive stand-in avatar, room-convention loader.
-- **packages/retrieval/** — FastAPI. GraphRAG-forward query over a trusted
-  substrate (currently stubbed — see [docs/architecture/overview.md](docs/architecture/overview.md)).
+  theme provider, primitive stand-in avatar, room GLB import + spawn-node
+  auto-frame + ambient audio (see [docs/architecture/room-convention.md](docs/architecture/room-convention.md)).
+- **packages/retrieval/** — FastAPI. Corpus ingest (extract -> chunk -> embed,
+  format-specific extractors behind a shared seam) is implemented;
+  GraphRAG-forward query over the ingested substrate is still stubbed. See
+  [packages/retrieval/README.md](packages/retrieval/README.md) (tests) and
+  [docs/architecture/overview.md](docs/architecture/overview.md).
 - **packages/shared-types/** — TypeScript types for the course package format
   shared between client and retrieval.
 - **packages/xapi-relay/** — Node process holding LRS credentials, reusing

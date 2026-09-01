@@ -45,13 +45,42 @@ corpus (documents for retrieval). Types: `packages/shared-types/src/`.
 
 Real: course package schema, lesson interpreter (via ported ScriptRunner),
 theme provider, primitive stand-in avatar, xAPI client (reused, generalized),
-DB schema, docker-compose.
+DB schema, docker-compose, corpus ingest (`packages/retrieval/app/ingest/`),
+room GLB import + spawn-node auto-frame + ambient audio (see below).
 
-Stubbed, by design, per the spec's own sprint plan: room GLB import + spawn-
-node auto-frame (no real room asset yet), CC4/CC5 material correction (no
-real avatar GLB yet), retrieval/ingest (status was "unknown" in the garage;
-this stub enforces the trusted-substrate contract without answering anything
-yet).
+## Room + ambient audio
+
+First real room GLB (`assets/rooms/sci-fi-lab/room.glb`, a Sketchfab
+download) is wired into `main.ts`: `SceneLoader.ImportMeshAsync` loads it,
+`roomConvention.ts` frames the camera from its bounding box, and a looping
+ambient bed (`RoomConfig.ambientAudioUrl`, e.g.
+`assets/audio/music/sci-fi-lab-ambient.mp3`) plays via Babylon's `Sound` API.
+See `docs/architecture/room-convention.md` for the spawn-node fallback this
+surfaced (most downloaded GLBs don't author a `SpawnPoint` node).
+
+`tsn-node-kit`'s `XApiRelay` (`telemetry/xapiClient.ts`) is not
+browser-bundle-safe as a static import — `offlineQueue.js` uses synchronous
+`fs` calls no polyfill can satisfy — so it's now dynamic-imported, only when
+`VITE_XAPI_SOCKET_URL` is actually configured. This was blocking the whole
+scene from rendering (a module-load-time crash) before it was found while
+verifying the room/audio work in a real browser.
+
+Corpus ingest is a two-stage pipeline with a stable seam: format-specific
+**extractors** (`ingest/extractors/`, currently plain text/Markdown via
+`TextExtractor`, picked by `CorpusDocument.format` or auto-detected from the
+source URL extension) produce a canonical `Block` list
+(`{text, heading_path, source_ref}`); a format-agnostic **chunker**
+(`ingest/chunker.py`) and **embedder** (`ingest/embedder.py`, OpenAI
+`text-embedding-3-small`) turn those into citation-tagged rows in
+`substrate.corpus_chunks`, orchestrated by `ingest/loader.py::ingest_corpus`.
+Add a PDF/DOCX extractor once research-open #1 (Jeffrey's actual document
+format) resolves — nothing else in the pipeline should need to change.
+
+Stubbed, by design, per the spec's own sprint plan: CC4/CC5 material
+correction (no real avatar GLB yet), `/api/query` retrieval (status was
+"unknown" in the garage; this stub enforces the trusted-substrate contract
+without answering anything yet — it now has a real substrate to query once
+retrieval logic lands).
 
 ## Architecture Decision Records
 
