@@ -1,6 +1,6 @@
 import asyncpg
 
-from app.config import settings
+from app.config import get_settings
 
 
 async def _init_conn(conn: asyncpg.Connection) -> None:
@@ -9,6 +9,7 @@ async def _init_conn(conn: asyncpg.Connection) -> None:
 
 
 async def create_pool() -> asyncpg.Pool:
+    settings = get_settings()
     return await asyncpg.create_pool(
         host=settings.postgres_host,
         port=settings.postgres_port,
