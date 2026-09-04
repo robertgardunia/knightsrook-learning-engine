@@ -25,6 +25,9 @@ export class DevPanel {
     this.camera = camera
     this.createPanel()
     this.setupKeyboardShortcut()
+    // Reachable from a devtools console or a scripted browser check without
+    // requiring pointer lock (which headless browsers can't reliably grant).
+    ;(window as unknown as { __devPanel?: DevPanel }).__devPanel = this
   }
 
   private createPanel(): void {

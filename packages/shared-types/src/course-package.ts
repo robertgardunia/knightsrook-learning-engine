@@ -34,6 +34,27 @@ export interface AvatarConfig {
   /** Omit for the primitive stand-in (capsules/spheres, procedural idle/talk/gesture). */
   glbUrl?: string
   animationSlots: AnimationSlots
+  /**
+   * Correction applied on top of the room's authored avatarSpawnNode yaw.
+   * Every CC/Blender export pipeline can bake a different "forward" axis
+   * for the character rig — this is the per-model config knob for that,
+   * same idea as garage's placeholder-mods.json rotateY overrides, just
+   * scoped to this project's single-avatar-per-room convention instead of
+   * a rule-matching system built for many placeholder characters. Degrees,
+   * clockwise when viewed from above. Omit if the model's default facing
+   * already agrees with the spawn node's authored yaw.
+   */
+  facingOffsetDegrees?: number
+  /**
+   * Default playback speed for every slot on this character, 1.0 = the
+   * clip's authored speed. ActorCore/CC library animations tend to run fast
+   * across the board, so this is a per-character knob, not a one-off fix —
+   * override individual slots via animationSpeedRatios instead of forcing
+   * every character to the same value.
+   */
+  animationSpeedRatio?: number
+  /** Per-slot override of animationSpeedRatio — takes precedence when set. */
+  animationSpeedRatios?: Partial<Record<keyof AnimationSlots, number>>
 }
 
 /** Exact clip indices, never name regex — see project:learning-demo:spec "Animation slots". */

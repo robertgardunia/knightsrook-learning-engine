@@ -44,9 +44,10 @@ corpus (documents for retrieval). Types: `packages/shared-types/src/`.
 ## What's real vs stubbed right now
 
 Real: course package schema, lesson interpreter (via ported ScriptRunner),
-theme provider, primitive stand-in avatar, xAPI client (reused, generalized),
-DB schema, docker-compose, corpus ingest (`packages/retrieval/app/ingest/`),
-room GLB import + spawn-node auto-frame + ambient audio (see below).
+theme provider, primitive stand-in avatar, real GLB-backed avatar (see
+below), xAPI client (reused, generalized), DB schema, docker-compose, corpus
+ingest (`packages/retrieval/app/ingest/`), room GLB import + spawn-node
+auto-frame + ambient audio (see below).
 
 ## Room + ambient audio
 
@@ -76,11 +77,29 @@ source URL extension) produce a canonical `Block` list
 Add a PDF/DOCX extractor once research-open #1 (Jeffrey's actual document
 format) resolves — nothing else in the pipeline should need to change.
 
-Stubbed, by design, per the spec's own sprint plan: CC4/CC5 material
-correction (no real avatar GLB yet), `/api/query` retrieval (status was
-"unknown" in the garage; this stub enforces the trusted-substrate contract
-without answering anything yet — it now has a real substrate to query once
-retrieval logic lands).
+## Real GLB-backed avatar
+
+`AvatarController` (`packages/client/src/avatar/`) is the GLB-backed
+counterpart to `PrimitiveStandIn` — used when `AvatarConfig.glbUrl` is set,
+same `.root`/`.playSlot` shape so `main.ts` doesn't care which one it got.
+`AnimationSlots` are exact clip indices into the GLB's own baked
+`animationGroups` (course authors pick indices once in Character Creator's
+timeline, no name-matching heuristics at runtime). `ccMaterialCorrection.ts`
+fixes Blender's glTF-export material quirks (forces everything OPAQUE
+regardless of source blend mode); `animationMixer.ts` is a separate
+retargeting engine for clips that live in their own file rather than baked
+into the avatar's GLB (e.g. a future ActorCore station-idle animation played
+on the mentor's own rig) — ported from garage with no changes needed, it had
+no garage-specific assumptions. `scripts/fbx2glb-avatar.py` is the
+Blender-side half of the pipeline (CC5 FBX export → cleaned-up GLB); see
+`public/assets/avatars/README.md` for what it does and
+`public/assets/animations/README.md` for the ActorCore clip library it
+draws from.
+
+Stubbed, by design, per the spec's own sprint plan: `/api/query` retrieval
+(status was "unknown" in the garage; this stub enforces the trusted-substrate
+contract without answering anything yet — it now has a real substrate to
+query once retrieval logic lands).
 
 ## Architecture Decision Records
 

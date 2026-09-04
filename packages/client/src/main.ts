@@ -1,6 +1,7 @@
-import { Color3, Color4, Engine, HemisphericLight, Mesh, Scene, SceneLoader, Vector3 } from "@babylonjs/core"
+import { Color3, Color4, Engine, HemisphericLight, Mesh, Quaternion, Scene, SceneLoader, Vector3 } from "@babylonjs/core"
 import "@babylonjs/loaders/glTF"
 
+import { AvatarController } from "./avatar/avatarController"
 import { PrimitiveStandIn } from "./avatar/primitiveStandIn"
 import { DevPanel } from "./devtools/devPanel"
 import { loadConfig } from "./lib/config"
@@ -57,6 +58,7 @@ async function main() {
   // satisfy (and the bounding-box fallback for GLBs that don't author one).
   let spawnPosition = Vector3.Zero()
   let avatarSpawnPosition: Vector3 | null = null
+  let avatarSpawnYaw = 0
   let camera = setupPlayerCamera(scene, canvas, spawnPosition)
   if (course.room.glbUrl) {
     const roomUrl = new URL(course.room.glbUrl, window.location.origin)
@@ -80,6 +82,7 @@ async function main() {
       const node = scene.getTransformNodeByName(course.room.avatarSpawnNode)
       if (node) {
         avatarSpawnPosition = snapToFloor(scene, getSpawnWorldPosition(node))
+        avatarSpawnYaw = getSpawnWorldYaw(node)
       } else {
         console.warn(
           `Room GLB is missing avatarSpawnNode "${course.room.avatarSpawnNode}" — ` +
@@ -106,10 +109,32 @@ async function main() {
   setupPostProcessing(scene)
   new DevPanel(scene, camera) // press ` to toggle — see devtools/devPanel.ts
 
-  const avatar = course.avatar.glbUrl
-    ? null // TODO: real GLB loader + cc4Materials.ts + arrivalTransition.ts once an asset exists
-    : new PrimitiveStandIn(scene, "avatar")
-  if (avatar) avatar.root.position = avatarSpawnPosition ?? spawnPosition.add(new Vector3(0, 0, -AVATAR_STANDOFF_METERS))
+  let avatar: AvatarController | PrimitiveStandIn
+  if (course.avatar.glbUrl) {
+    // CC-exported GLBs are all roughly the same size — a flat estimate is
+    // close enough for a proportional loading dial; real byte progress from
+    // onProgress corrects it as bytes actually arrive (see loadProgress.ts).
+    const AVATAR_WEIGHT_BYTES = 3_500_000
+    registerLoad("avatar", AVATAR_WEIGHT_BYTES)
+    avatar = await AvatarController.create(
+      scene,
+      course.avatar.glbUrl,
+      course.avatar.animationSlots,
+      (loaded, total) => reportProgress("avatar", loaded, total),
+      { animationSpeedRatio: course.avatar.animationSpeedRatio, animationSpeedRatios: course.avatar.animationSpeedRatios },
+    )
+    completeLoad("avatar")
+  } else {
+    avatar = new PrimitiveStandIn(scene, "avatar")
+  }
+  avatar.root.position = avatarSpawnPosition ?? spawnPosition.add(new Vector3(0, 0, -AVATAR_STANDOFF_METERS))
+  if (avatarSpawnPosition) {
+    // Only apply the spawn node's authored yaw when we actually found one —
+    // the AVATAR_STANDOFF_METERS fallback above has no facing to read, and
+    // whatever default orientation the model exported with is fine there.
+    const offsetRadians = ((course.avatar.facingOffsetDegrees ?? 0) * Math.PI) / 180
+    avatar.root.rotationQuaternion = Quaternion.RotationYawPitchRoll(avatarSpawnYaw + offsetRadians, 0, 0)
+  }
 
   const hooks: LessonInterpreterHooks = {
     playAnimationSlot: async (slot) => {
