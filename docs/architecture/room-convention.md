@@ -42,6 +42,17 @@ mentor avatar stands, same convention as the player's spawn node. Omit it and
 fine for the primitive capsule stand-in, but a real placement is worth
 authoring once there's a real avatar GLB.
 
+Unlike the player spawn, this node's position is used **as-authored**, not
+run through `snapToFloor()` — that function always raycasts straight down
+and overrides Y with the nearest floor collider below, which is correct for
+the player (never trap the camera in a slightly-embedded empty) but would
+silently cancel out any deliberate height on this node (a raised platform,
+etc.). `main.ts` separately measures the avatar's actual mesh hierarchy
+bounding box after positioning and nudges Y so his feet sit exactly on that
+authored height — correcting for the avatar model's own local origin not
+necessarily being exactly at foot level, without re-clamping him to the
+floor the way `snapToFloor` would.
+
 ## Room-scale camera: WASD + gravity, not an orbit
 
 `packages/client/src/scene/playerCamera.ts` is a first-person `UniversalCamera`

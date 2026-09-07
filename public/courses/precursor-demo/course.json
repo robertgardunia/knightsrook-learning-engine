@@ -7,7 +7,7 @@
     "ambientAudioUrl": "/assets/audio/music/sci-fi-lab-ambient.mp3"
   },
   "avatar": {
-    "glbUrl": "/assets/avatars/vulcan-tvek/avatar.glb",
+    "glbUrl": "/assets/avatars/vulcan-tvek/avatar.glb?v=20260907-1613",
     "facingOffsetDegrees": 180,
     "animationSpeedRatio": 0.5,
     "animationSlots": { "idle": 0, "talk": 1, "greet": 2, "explain": 3, "point": 4 }

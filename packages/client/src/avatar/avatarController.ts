@@ -1,4 +1,4 @@
-import { AnimationGroup, SceneLoader, TransformNode, type Mesh, type Scene } from "@babylonjs/core"
+import { AnimationGroup, SceneLoader, TransformNode, type AbstractMesh, type Mesh, type Scene } from "@babylonjs/core"
 
 import type { AnimationSlots } from "@learning-engine/shared-types"
 
@@ -22,6 +22,7 @@ export class AvatarController {
   private readonly slots: AnimationSlots
   private readonly defaultSpeedRatio: number
   private readonly speedRatios: Partial<Record<keyof AnimationSlots, number>>
+  private readonly meshes: AbstractMesh[]
   private currentGroup: AnimationGroup | null = null
 
   private constructor(
@@ -30,12 +31,14 @@ export class AvatarController {
     slots: AnimationSlots,
     defaultSpeedRatio: number,
     speedRatios: Partial<Record<keyof AnimationSlots, number>>,
+    meshes: AbstractMesh[],
   ) {
     this.root = root
     this.animationGroups = animationGroups
     this.slots = slots
     this.defaultSpeedRatio = defaultSpeedRatio
     this.speedRatios = speedRatios
+    this.meshes = meshes
   }
 
   static async create(
@@ -68,6 +71,7 @@ export class AvatarController {
       slots,
       options.animationSpeedRatio ?? 1.0,
       options.animationSpeedRatios ?? {},
+      result.meshes,
     )
     await avatar.playSlot("idle")
     result.meshes.forEach((m) => (m.isVisible = true))
@@ -97,5 +101,21 @@ export class AvatarController {
     // CC bakes a bind-pose reference frame at 0 — skip past it.
     group.goToFrame(group.from + 1)
     this.currentGroup = group
+  }
+
+  /**
+   * Show/hide meshes by case-insensitive name substring — e.g. a hand prop
+   * (tricorder) baked into the avatar GLB, parented to a hand bone in
+   * Blender/CC5 rather than positioned at runtime, toggled on only when the
+   * lesson actually wants him holding it.
+   */
+  setMeshVisible(namePattern: string, visible: boolean): void {
+    const pattern = namePattern.toLowerCase()
+    const matches = this.meshes.filter((m) => m.name.toLowerCase().includes(pattern))
+    if (matches.length === 0) {
+      console.warn(`[avatar] no mesh matching "${namePattern}" to set visibility on`)
+      return
+    }
+    matches.forEach((m) => (m.isVisible = visible))
   }
 }

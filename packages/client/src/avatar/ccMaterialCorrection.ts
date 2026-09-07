@@ -60,14 +60,12 @@ export function correctCCMaterials(meshes: AbstractMesh[]): void {
       mat.albedoColor.set(0.85, 0.82, 0.8)
     }
 
-    // Clothing (cloth/boots/badge material slots) single-sided by default —
-    // a visible "hole" where the mesh folds back on itself (thin fabric,
-    // sharp bends at the shoulder) is often just the back face being culled,
-    // not an actual gap in the geometry. Double-siding costs little on a
-    // low-poly clothing mesh and rules that out.
-    const isClothing = /^cloth|boots|badge/.test(name)
-    if (isClothing) {
-      mat.backFaceCulling = false
-    }
+    // NOTE: previously forced clothing double-sided here to test whether a
+    // visible "hole" near the armpit/shoulder was just a culled backface.
+    // Reverted — suspect it was actually causing a different artifact: with
+    // backface culling off, an overlapping/self-intersecting fold in the
+    // conformed cloth mesh (invisible in CC5, which only ever renders front
+    // faces) exposes its own inner surface, flatly lit and wrong-shaded.
+    // See project:learning-demo:spec for the investigation.
   }
 }

@@ -209,6 +209,25 @@ def clear_animations(armature):
         bpy.data.actions.remove(action)
 
 
+def strip_root_motion_tracks(action):
+    """ActorCore motion files bake the source performer's own bone lengths
+    and proportions into per-bone position/scale fcurves — applying those
+    directly onto a differently-proportioned character's rig moves bones to
+    where the SOURCE actor's would be, not this character's, distorting the
+    mesh around them (confirmed 2026-09-07: this was tearing the shirt's
+    underarm seam open — clean with animations stripped, broken with this
+    clip linked). animationMixer.ts's runtime retargeting path already
+    strips these via its filterRootMotion option; this is the equivalent
+    fix for the Blender-side NLA-baking path, which had no such filter."""
+    removed = 0
+    for fcurve in list(action.fcurves):
+        prop = fcurve.data_path.split('.')[-1]
+        if prop in ('location', 'scale'):
+            action.fcurves.remove(fcurve)
+            removed += 1
+    print(f"  Stripped {removed} position/scale fcurve(s) from '{action.name}' (rotation kept)")
+
+
 def link_animation_from_source(char_name, source_file):
     """Import one source GLB/FBX and link its first usable action directly to
     the character armature via NLA. No frame-by-frame baking — avoids
@@ -238,6 +257,7 @@ def link_animation_from_source(char_name, source_file):
 
     # One clip per source file — take the longest non-bind-pose action.
     action = max(new_actions, key=lambda a: a.frame_range[1] - a.frame_range[0])
+    strip_root_motion_tracks(action)
     frame_start = int(action.frame_range[0])
     track = char_arm.animation_data.nla_tracks.new()
     track.name = action.name

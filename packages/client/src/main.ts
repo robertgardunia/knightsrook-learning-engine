@@ -81,7 +81,13 @@ async function main() {
     if (course.room.avatarSpawnNode) {
       const node = scene.getTransformNodeByName(course.room.avatarSpawnNode)
       if (node) {
-        avatarSpawnPosition = snapToFloor(scene, getSpawnWorldPosition(node))
+        // NOT snapToFloor — that raycasts straight down and always overrides
+        // the node's authored Y with the nearest floor height below it,
+        // which is right for the player spawn (never trap the camera in a
+        // slightly-embedded empty) but wrong here: it silently cancels out
+        // any deliberate height on avatarSpawnNode (a raised platform, etc).
+        // Use the node's actual authored position as-is.
+        avatarSpawnPosition = getSpawnWorldPosition(node)
         avatarSpawnYaw = getSpawnWorldYaw(node)
       } else {
         console.warn(
@@ -129,6 +135,20 @@ async function main() {
   }
   avatar.root.position = avatarSpawnPosition ?? spawnPosition.add(new Vector3(0, 0, -AVATAR_STANDOFF_METERS))
   if (avatarSpawnPosition) {
+    // The avatar's own root position isn't reliably "the feet" — CC5/Blender
+    // exports don't always put the character's local origin exactly at foot
+    // level, so a small gap or overlap with the floor can persist even
+    // though avatarSpawnPosition itself is correctly floor-snapped (garage's
+    // characterLoader.js hit the same thing; ported the fix here). Measure
+    // the actual hierarchy bounding box after positioning and nudge Y so the
+    // lowest point sits exactly on the target floor height.
+    avatar.root.getChildMeshes(true).forEach((m) => m.computeWorldMatrix(true))
+    const bounds = avatar.root.getHierarchyBoundingVectors(true)
+    const feetOffset = bounds.min.y - avatarSpawnPosition.y
+    if (Math.abs(feetOffset) > 0.001) {
+      avatar.root.position.y -= feetOffset
+    }
+
     // Only apply the spawn node's authored yaw when we actually found one —
     // the AVATAR_STANDOFF_METERS fallback above has no facing to read, and
     // whatever default orientation the model exported with is fine there.

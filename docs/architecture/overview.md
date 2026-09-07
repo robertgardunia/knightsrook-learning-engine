@@ -94,7 +94,10 @@ no garage-specific assumptions. `scripts/fbx2glb-avatar.py` is the
 Blender-side half of the pipeline (CC5 FBX export → cleaned-up GLB); see
 `public/assets/avatars/README.md` for what it does and
 `public/assets/animations/README.md` for the ActorCore clip library it
-draws from.
+draws from. `AvatarController.setMeshVisible(namePattern, visible)`
+shows/hides a mesh by name substring — used for the tricorder prop, which is
+attached directly in Blender/CC5 (parented to a hand bone) and baked into
+the GLB rather than positioned at runtime.
 
 Stubbed, by design, per the spec's own sprint plan: `/api/query` retrieval
 (status was "unknown" in the garage; this stub enforces the trusted-substrate
