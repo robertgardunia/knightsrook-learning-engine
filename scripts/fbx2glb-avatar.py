@@ -270,9 +270,37 @@ def link_animation_from_source(char_name, source_file):
     return True
 
 
+def apply_transforms():
+    """CC5 FBX exports bake a negative X scale AND a Z-up rotation onto the
+    armature — both propagate into the exported GLB as a mirror/misorientation.
+    bpy.ops.object.transform_apply only applies to the ACTIVE object, not all
+    selected, so iterate explicitly. Apply armature first so child meshes
+    inherit the corrected parent-inverse matrix."""
+    bpy.ops.object.select_all(action='DESELECT')
+    # Armature first
+    for obj in bpy.data.objects:
+        if obj.type == 'ARMATURE':
+            bpy.context.view_layer.objects.active = obj
+            obj.select_set(True)
+            bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+            obj.select_set(False)
+            print(f"  Applied transforms: {obj.name}  scale={tuple(round(v,4) for v in obj.scale)}")
+    # Then meshes
+    for obj in bpy.data.objects:
+        if obj.type == 'MESH':
+            bpy.context.view_layer.objects.active = obj
+            obj.select_set(True)
+            bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+            obj.select_set(False)
+            print(f"  Applied transforms: {obj.name}  scale={tuple(round(v,4) for v in obj.scale)}")
+
+
 def convert(input_path, output_path, anim_sources, max_size=1024):
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.ops.import_scene.fbx(filepath=input_path)
+
+    print("\n[0] Applying transforms (flatten FBX negative-X-scale mirror)...")
+    apply_transforms()
 
     print("\n[1] Deleting unwanted meshes...")
     delete_unwanted_meshes()

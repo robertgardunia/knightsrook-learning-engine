@@ -16,6 +16,7 @@ import {
   DirectionalLight,
   Engine,
   HemisphericLight,
+  Quaternion,
   Scene,
   SceneLoader,
   Vector3,
@@ -113,7 +114,12 @@ function fitToView(scene: Scene, root: AbstractMesh, meshes: AbstractMesh[]): vo
   const bounds = root.getHierarchyBoundingVectors(true)
   const height = Math.max(0.001, bounds.max.y - bounds.min.y)
   const scale = 1.78 / height
-  root.scaling.setAll(scale)
+  // Preserve the sign of each axis — the GLB root may have a negative X scale
+  // from the importer's coordinate-system conversion. setAll() would clobber
+  // it with a positive value and un-mirror the character incorrectly.
+  root.scaling.x = Math.sign(root.scaling.x || 1) * scale
+  root.scaling.y = Math.sign(root.scaling.y || 1) * scale
+  root.scaling.z = Math.sign(root.scaling.z || 1) * scale
   scene.render()
 
   root.getChildMeshes(true).forEach((m) => m.computeWorldMatrix(true))
@@ -151,7 +157,7 @@ async function loadCharacter(scene: Scene, glbPath: string): Promise<AnimationGr
   _charMeshes.forEach((m) => { m.isPickable = false })
 
   fitToView(scene, _charRoot, _charMeshes)
-  _charRoot.rotation = new Vector3(0, Math.PI, 0)
+  _charRoot.rotationQuaternion = Quaternion.RotationYawPitchRoll(Math.PI, 0, 0)
 
   _bakedGroups = result.animationGroups ?? []
   _bakedGroups.forEach((g) => { try { g.stop() } catch { /* ok */ } })

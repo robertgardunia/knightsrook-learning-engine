@@ -45,7 +45,7 @@ docker compose up --build retrieval db   # retrieval API + Postgres
 
 ## Tools
 
-- **`/tools/anim-viewer/`** — Animation viewer. Auto-loads the default character, plays a default actorcore idle, camera faces the character correctly. 420px sidebar, no horizontal scroll. Inspect baked animation groups by index, preview actorcore library clips retargeted onto the rig, assign animations to named course slots (`idle`, `talk`, `greet`, `explain`, `point`), and copy a ready-to-paste `animationSlots` JSON block. Planned: import wizard to re-run `fbx2glb-avatar.py` with configurable settings from the browser.
+- **`/tools/anim-viewer/`** — Animation viewer. Auto-loads the default character, plays a default actorcore idle, character orientation matches the live scene. 420px sidebar, no horizontal scroll. Inspect baked animation groups by index, preview actorcore library clips retargeted onto the rig, assign animations to named course slots (`idle`, `talk`, `greet`, `explain`, `point`), and copy a ready-to-paste `animationSlots` JSON block. Planned: import wizard to re-run `fbx2glb-avatar.py` with configurable settings from the browser.
 
 ## Docs
 
