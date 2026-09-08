@@ -212,7 +212,7 @@ function buildUI(engine: Engine, scene: Scene): HTMLButtonElement {
   const panel = document.createElement("div")
   panel.style.cssText = `
     position: fixed; top: 0; left: 0; width: 300px; height: 100vh;
-    background: rgba(18,18,28,0.97); color: #ccc; overflow-y: auto;
+    background: rgba(18,18,28,0.97); color: #ccc; overflow-y: auto; overflow-x: hidden;
     font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px;
     z-index: 10000; padding: 12px; box-sizing: border-box; border-right: 1px solid #333;
   `
@@ -354,7 +354,7 @@ function buildUI(engine: Engine, scene: Scene): HTMLButtonElement {
 
     const sel = document.createElement("select")
     sel.style.cssText =
-      "flex: 1; padding: 3px; background: #222; color: #ccc; border: 1px solid #444; font-size: 11px;"
+      "flex: 1; min-width: 0; padding: 3px; background: #222; color: #ccc; border: 1px solid #444; font-size: 11px;"
     const none = document.createElement("option")
     none.value = ""
     none.textContent = "— unassigned —"
@@ -498,6 +498,7 @@ function makeBtn(label: string, bg: string, color: string): HTMLButtonElement {
     display: block; width: 100%; text-align: left; padding: 5px 8px;
     margin-bottom: 3px; background: ${bg}; color: ${color}; border: 1px solid #333;
     cursor: pointer; font-size: 12px; border-radius: 3px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; box-sizing: border-box;
   `
   btn.onmouseenter = () => { btn.style.filter = "brightness(1.3)" }
   btn.onmouseleave = () => { btn.style.filter = "" }
