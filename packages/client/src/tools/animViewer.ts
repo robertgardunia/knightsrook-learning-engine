@@ -211,7 +211,7 @@ function stopAll(): void {
 function buildUI(engine: Engine, scene: Scene): HTMLButtonElement {
   const panel = document.createElement("div")
   panel.style.cssText = `
-    position: fixed; top: 0; left: 0; width: 300px; height: 100vh;
+    position: fixed; top: 0; left: 0; width: 420px; height: 100vh;
     background: rgba(18,18,28,0.97); color: #ccc; overflow-y: auto; overflow-x: hidden;
     font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px;
     z-index: 10000; padding: 12px; box-sizing: border-box; border-right: 1px solid #333;
@@ -483,7 +483,7 @@ function buildUI(engine: Engine, scene: Scene): HTMLButtonElement {
 
   document.body.appendChild(panel)
   const canvas = engine.getRenderingCanvas()
-  if (canvas) canvas.style.marginLeft = "300px"
+  if (canvas) canvas.style.marginLeft = "420px"
   engine.resize()
 
   return loadBtn
