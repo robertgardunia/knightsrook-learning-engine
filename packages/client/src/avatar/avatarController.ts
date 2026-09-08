@@ -3,6 +3,7 @@ import { AnimationGroup, SceneLoader, TransformNode, type AbstractMesh, type Mes
 import type { AnimationSlots } from "@learning-engine/shared-types"
 
 import { correctCCMaterials } from "./ccMaterialCorrection"
+import { DEFAULT_VISEME_MAP, DEFAULT_VISEME_TIMING, initVisemeController } from "./visemeController"
 
 /**
  * Real GLB-backed mentor avatar — the CC5-exported counterpart to
@@ -73,6 +74,19 @@ export class AvatarController {
       options.animationSpeedRatios ?? {},
       result.meshes,
     )
+
+    initVisemeController({
+      rootMesh: root as AbstractMesh,
+      characterConfig: {
+        visemeMeshName: null,
+        visemeSetSuffix: "",
+        teethSuffix: "",
+        visemeOffset: 0,
+        visemeTiming: DEFAULT_VISEME_TIMING,
+        visemeMap: DEFAULT_VISEME_MAP,
+      },
+    })
+
     await avatar.playSlot("idle")
     result.meshes.forEach((m) => (m.isVisible = true))
 

@@ -1,7 +1,9 @@
-import { Color3, Color4, Engine, HemisphericLight, Mesh, Quaternion, Scene, SceneLoader, Vector3 } from "@babylonjs/core"
+import { Color3, Color4, Engine, HemisphericLight, Mesh, MeshBuilder, Quaternion, Scene, SceneLoader, Vector3 } from "@babylonjs/core"
 import "@babylonjs/loaders/glTF"
 
 import { AvatarController } from "./avatar/avatarController"
+import { clampVisemeMorphs, visemeRenderController } from "./avatar/visemeController"
+import { configureSpeech, getAudioState, speak } from "./avatar/speechController"
 import { PrimitiveStandIn } from "./avatar/primitiveStandIn"
 import { DevPanel } from "./devtools/devPanel"
 import { loadConfig } from "./lib/config"
@@ -130,6 +132,10 @@ async function main() {
       { animationSpeedRatio: course.avatar.animationSpeedRatio, animationSpeedRatios: course.avatar.animationSpeedRatios },
     )
     completeLoad("avatar")
+
+    if (config.elevenLabsApiKey && course.voice?.voiceId) {
+      configureSpeech({ apiKey: config.elevenLabsApiKey, voiceId: course.voice.voiceId })
+    }
   } else {
     avatar = new PrimitiveStandIn(scene, "avatar")
   }
@@ -156,12 +162,30 @@ async function main() {
     avatar.root.rotationQuaternion = Quaternion.RotationYawPitchRoll(avatarSpawnYaw + offsetRadians, 0, 0)
   }
 
+  // Invisible collision cylinder so the player can't walk through the
+  // mentor — same shape garage's characterLoader.js uses for every
+  // character. Parented to avatar.root (not just position-copied once, as
+  // garage's static-character version did) so it automatically tracks him
+  // if he ever moves once the mobility/station system exists.
+  const AVATAR_COLLIDER_DIAMETER = 1.2
+  const AVATAR_COLLIDER_HEIGHT = 2.0
+  const avatarCollider = MeshBuilder.CreateCylinder(
+    "avatar-collider",
+    { diameter: AVATAR_COLLIDER_DIAMETER, height: AVATAR_COLLIDER_HEIGHT },
+    scene,
+  )
+  avatarCollider.parent = avatar.root
+  avatarCollider.position = new Vector3(0, AVATAR_COLLIDER_HEIGHT / 2, 0)
+  avatarCollider.isVisible = false
+  avatarCollider.checkCollisions = true
+  avatarCollider.isPickable = false
+
   const hooks: LessonInterpreterHooks = {
     playAnimationSlot: async (slot) => {
       await avatar?.playSlot(slot)
     },
     showDialogue: async (text) => {
-      console.log(`[dialogue] ${text}`)
+      await speak(text)
     },
     presentChoices: async (beat) => {
       // TODO: real UI. Stand-in auto-picks the first correct choice so the
@@ -184,7 +208,32 @@ async function main() {
   const interpreter = new LessonInterpreter(course.lesson, hooks)
   await interpreter.run()
 
-  engine.runRenderLoop(() => scene.render())
+  let audioWasPlaying = false
+  let decayTailStart = 0
+
+  engine.runRenderLoop(() => {
+    const { isActive, audioStartTime, visemeData, now: audioNow } = getAudioState()
+
+    if (isActive) {
+      audioWasPlaying = true
+      visemeRenderController(audioStartTime, visemeData, audioNow)
+    } else if (audioWasPlaying) {
+      audioWasPlaying = false
+      decayTailStart = performance.now() / 1000
+    }
+
+    if (!isActive && decayTailStart > 0) {
+      if (performance.now() / 1000 - decayTailStart < 0.5) {
+        visemeRenderController(audioStartTime, visemeData, audioNow)
+      } else {
+        decayTailStart = 0
+      }
+    }
+
+    clampVisemeMorphs(0.85)
+
+    scene.render()
+  })
   window.addEventListener("resize", () => engine.resize())
 }
 

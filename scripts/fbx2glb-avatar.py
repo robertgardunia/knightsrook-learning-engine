@@ -174,15 +174,6 @@ def fix_beard_jaw_skinning():
         print("  No sideburn/beard mesh found — nothing to fix")
 
 
-def strip_all_shape_keys():
-    for obj in bpy.data.objects:
-        if obj.type == 'MESH' and obj.data.shape_keys:
-            n = len(obj.data.shape_keys.key_blocks)
-            bpy.context.view_layer.objects.active = obj
-            obj.shape_key_clear()
-            print(f"  STRIP shape keys: {obj.name} ({n} removed)")
-
-
 def compress_textures(max_size):
     for img in bpy.data.images:
         if img.size[0] == 0 or img.size[1] == 0:
@@ -309,10 +300,7 @@ def convert(input_path, output_path, anim_sources, max_size=1024):
     print("\n[4] Fixing beard jaw skinning...")
     fix_beard_jaw_skinning()
 
-    print("\n[5] Stripping all shape keys...")
-    strip_all_shape_keys()
-
-    print(f"\n[6] Compressing textures to {max_size}px...")
+    print(f"\n[5] Compressing textures to {max_size}px...")
     compress_textures(max_size)
 
     if anim_sources:
@@ -332,7 +320,7 @@ def convert(input_path, output_path, anim_sources, max_size=1024):
         export_format='GLB',
         export_animations=True,
         export_skins=True,
-        export_morph=False,
+        export_morph=True,
         export_apply=False,
         export_image_format='JPEG',
         export_jpeg_quality=90,

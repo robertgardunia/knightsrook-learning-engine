@@ -13,8 +13,8 @@
     "animationSlots": { "idle": 0, "talk": 1, "greet": 2, "explain": 3, "point": 4 }
   },
   "voice": {
-    "elevenLabsAgentId": "",
-    "voiceId": ""
+    "elevenLabsAgentId": "agent_8901m1z9an9eezjssgsm2kf189js",
+    "voiceId": "gcdNeREzHPJpCf9wnB0l"
   },
   "theme": {
     "id": "vulcan",

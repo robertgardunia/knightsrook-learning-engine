@@ -10,9 +10,11 @@ learning-demo.knightsrook.com · full spec in Knightsrook MCP:
 ## Stack
 
 - **packages/client/** — Babylon.js + Vite + TypeScript. Lesson interpreter,
-  theme provider, GLB-backed avatar (falls back to a primitive stand-in when
-  no avatar GLB is configured — see `packages/client/src/avatar/`), room GLB
-  import + spawn-node auto-frame + ambient audio (see [docs/architecture/room-convention.md](docs/architecture/room-convention.md)).
+  theme provider, GLB-backed avatar with streaming ElevenLabs TTS + full
+  viseme/lip-sync (morph targets + jaw-bone rotation, ported from garage's
+  `avatarChatOM` — falls back to a primitive stand-in when no GLB is configured),
+  room GLB import + spawn-node auto-frame + ambient audio (see [docs/architecture/room-convention.md](docs/architecture/room-convention.md)).
+  Single model per character — no separate visual/speaking split.
 - **packages/retrieval/** — FastAPI. Corpus ingest (extract -> chunk -> embed,
   format-specific extractors behind a shared seam) is implemented;
   GraphRAG-forward query over the ingested substrate is still stubbed. See

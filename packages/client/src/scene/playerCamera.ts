@@ -23,21 +23,19 @@ import type { Scene } from "@babylonjs/core"
  * are floor-level by convention (see room-convention.md — the avatar's
  * root sits there too, with its own body/head offset upward from it), so
  * the camera needs its own eye-height offset added on top of that floor
- * point.
+ * point at spawn time. That's the only divergence — applyGravity, ellipsoid,
+ * and everything else matches garage exactly.
  *
- * Height is locked, not gravity-simulated: this room has no ramps, steps,
- * or jumping, so eye height above the floor is a constant, not something
- * that should ever legitimately change during play. Trusting Babylon's
- * gravity/collision system to keep recomputing a value that never needs to
- * change turned out to be exactly the source of a long chain of height bugs
- * tonight (spawns low then rises on first move; an ellipsoidOffset "fix"
- * that then made it DROP on first move instead — camera.position's meaning
- * relative to the collision ellipsoid kept shifting between initial
- * placement and post-collision resolution). Pinning Y every frame after
- * collision runs sidesteps all of that: applyGravity/ellipsoidOffset stay
- * off, checkCollisions + a flat ellipsoid still block horizontal movement
- * into walls (see markRoomMeshesCollidable's Collider* meshes), and Y is
- * simply never touched after spawn.
+ * A previous version of this file locked Y with a manual
+ * onBeforeRenderObservable override instead of applyGravity, reasoning that
+ * a flat room with no ramps/steps shouldn't need gravity recomputing a
+ * constant every frame. That turned out to actively fight Babylon's own
+ * collision resolution — forcing Y outside of collision's own update cycle
+ * left the camera's position and the collision system disagreeing about
+ * where it actually was, which surfaced as walking straight through the
+ * avatar's collider and then getting stuck (2026-09-07). Garage's collision
+ * has always worked correctly with applyGravity=true and no manual override;
+ * matching that exactly rather than re-inventing height handling.
  */
 const ELLIPSOID = new Vector3(0.45, 0.81, 0.45)
 const EYE_HEIGHT = 1.7
@@ -67,12 +65,8 @@ export function setupPlayerCamera(
   camera.maxZ = 5000
 
   camera.checkCollisions = true
-  camera.applyGravity = false
+  camera.applyGravity = true
   camera.ellipsoid = ELLIPSOID.clone()
-
-  scene.onBeforeRenderObservable.add(() => {
-    camera.position.y = fixedEyeY
-  })
 
   canvas.addEventListener("click", () => {
     canvas.requestPointerLock?.()
