@@ -10,7 +10,7 @@
     "glbUrl": "/assets/avatars/vulcan-tvek/avatar.glb",
     "facingOffsetDegrees": 180,
     "animationSlots": {
-      "idle": "main-idle.glb",
+      "idle": "idleandmoves-standhandbackidle.glb",
       "talk": ["chat-relax-m.glb", "male-stand-talk-2.glb", "standing_chat_m_270753.glb"],
       "greet": "idleandmoves-standhandbackidle.glb",
       "explain": "standingdiscussion_lookingdown_m_270746.glb",

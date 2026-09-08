@@ -45,7 +45,7 @@ docker compose up --build retrieval db   # retrieval API + Postgres
 
 ## Tools
 
-- **`/tools/anim-viewer/`** — Animation viewer. Auto-loads the default character on open, plays the first animation. 420px sidebar, no horizontal scroll. Character faces the camera correctly. Inspect baked animation groups by index, preview actorcore library clips retargeted onto the rig, assign animations to named course slots (`idle`, `talk`, `greet`, `explain`, `point`), and copy a ready-to-paste `animationSlots` JSON block. Planned: import wizard to re-run `fbx2glb-avatar.py` with configurable settings from the browser.
+- **`/tools/anim-viewer/`** — Animation viewer. Auto-loads the default character on open, plays the first animation. 420px sidebar, no horizontal scroll. No forced Y-rotation on the character — orbit freely. Inspect baked animation groups by index, preview actorcore library clips retargeted onto the rig, assign animations to named course slots (`idle`, `talk`, `greet`, `explain`, `point`), and copy a ready-to-paste `animationSlots` JSON block. Planned: import wizard to re-run `fbx2glb-avatar.py` with configurable settings from the browser.
 
 ## Docs
 

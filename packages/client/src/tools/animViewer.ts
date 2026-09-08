@@ -151,7 +151,7 @@ async function loadCharacter(scene: Scene, glbPath: string): Promise<AnimationGr
   _charMeshes.forEach((m) => { m.isPickable = false })
 
   fitToView(scene, _charRoot, _charMeshes)
-  _charRoot.rotation = new Vector3(0, Math.PI, 0)
+  _charRoot.rotation = new Vector3(0, 0, 0)
 
   _bakedGroups = result.animationGroups ?? []
   _bakedGroups.forEach((g) => { try { g.stop() } catch { /* ok */ } })
