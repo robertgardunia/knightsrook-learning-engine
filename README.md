@@ -41,6 +41,10 @@ npm run start:xapi-relay      # xAPI relay, ws://localhost:5040
 docker compose up --build retrieval db   # retrieval API + Postgres
 ```
 
+## Tools
+
+- **`/tools/anim-viewer/`** — Animation viewer. Load any character GLB, inspect baked animation groups by index, preview actorcore library clips retargeted onto the rig, assign animations to named course slots (`idle`, `talk`, `greet`, `explain`, `point`), and copy a ready-to-paste `animationSlots` JSON block. Planned: import wizard to re-run `fbx2glb-avatar.py` with configurable settings from the browser.
+
 ## Docs
 
 - [docs/architecture/overview.md](docs/architecture/overview.md) — services, course package schema, key flows, ADRs
