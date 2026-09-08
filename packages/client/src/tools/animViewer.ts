@@ -208,7 +208,7 @@ function stopAll(): void {
 
 // ── UI ───────────────────────────────────────────────────────────────────────
 
-function buildUI(engine: Engine, scene: Scene): void {
+function buildUI(engine: Engine, scene: Scene): HTMLButtonElement {
   const panel = document.createElement("div")
   panel.style.cssText = `
     position: fixed; top: 0; left: 0; width: 300px; height: 100vh;
@@ -254,18 +254,24 @@ function buildUI(engine: Engine, scene: Scene): void {
   const loadBtn = makeBtn("Load", "#1a2a1a", "#7f7")
   loadBtn.style.padding = "4px 10px"
   loadBtn.style.marginBottom = "0"
-  loadBtn.onclick = async () => {
+  async function doLoad(): Promise<void> {
     const p = pathInput.value.trim()
     if (!p) return
     status.textContent = "Loading…"
     try {
       const baked = await loadCharacter(scene, p)
       rebuildBakedSection(baked)
-      status.textContent = `Loaded — ${baked.length} baked animation group${baked.length === 1 ? "" : "s"}`
+      if (baked.length > 0) {
+        playBaked(baked[0], loopCheck.checked, status)
+      } else {
+        status.textContent = `Loaded — no baked animation groups`
+      }
     } catch (e) {
       status.textContent = `Error: ${String(e)}`
     }
   }
+
+  loadBtn.onclick = () => void doLoad()
   pathRow.appendChild(loadBtn)
   panel.appendChild(pathRow)
 
@@ -479,6 +485,8 @@ function buildUI(engine: Engine, scene: Scene): void {
   const canvas = engine.getRenderingCanvas()
   if (canvas) canvas.style.marginLeft = "300px"
   engine.resize()
+
+  return loadBtn
 }
 
 // ── Style helpers ─────────────────────────────────────────────────────────────
@@ -537,7 +545,9 @@ const dir = new DirectionalLight("viewerDir", new Vector3(-0.3, -1, 0.2), scene)
 dir.position = new Vector3(3, 8, -4)
 dir.intensity = 0.6
 
-buildUI(engine, scene)
+const loadBtn = buildUI(engine, scene)
 
 engine.runRenderLoop(() => scene.render())
+
+loadBtn.click()
 window.addEventListener("resize", () => engine.resize())
