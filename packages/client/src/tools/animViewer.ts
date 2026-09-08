@@ -151,7 +151,7 @@ async function loadCharacter(scene: Scene, glbPath: string): Promise<AnimationGr
   _charMeshes.forEach((m) => { m.isPickable = false })
 
   fitToView(scene, _charRoot, _charMeshes)
-  _charRoot.rotation = new Vector3(0, 0, 0)
+  _charRoot.rotation = new Vector3(0, Math.PI, 0)
 
   _bakedGroups = result.animationGroups ?? []
   _bakedGroups.forEach((g) => { try { g.stop() } catch { /* ok */ } })
@@ -261,11 +261,8 @@ function buildUI(engine: Engine, scene: Scene): HTMLButtonElement {
     try {
       const baked = await loadCharacter(scene, p)
       rebuildBakedSection(baked)
-      if (baked.length > 0) {
-        playBaked(baked[0], loopCheck.checked, status)
-      } else {
-        status.textContent = `Loaded — no baked animation groups`
-      }
+      status.textContent = `Loaded — playing default idle…`
+      await playExternal("standingdiscussion_lookingdown_m_270746.glb", true, status)
     } catch (e) {
       status.textContent = `Error: ${String(e)}`
     }
