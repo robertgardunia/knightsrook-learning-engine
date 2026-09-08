@@ -528,7 +528,7 @@ const scene = new Scene(engine)
 _scene = scene
 scene.clearColor = new Color4(0.1, 0.1, 0.14, 1)
 
-const camera = new ArcRotateCamera("viewerCam", -Math.PI / 2, Math.PI / 3, 2.8, new Vector3(0, 0.9, 0), scene)
+const camera = new ArcRotateCamera("viewerCam", Math.PI / 2, Math.PI / 3, 2.8, new Vector3(0, 0.9, 0), scene)
 camera.lowerRadiusLimit = 0.5
 camera.upperRadiusLimit = 10
 camera.lowerBetaLimit = 0.1
