@@ -14,7 +14,9 @@ learning-demo.knightsrook.com · full spec in Knightsrook MCP:
   viseme/lip-sync (morph targets + jaw-bone rotation, ported from garage's
   `avatarChatOM` — falls back to a primitive stand-in when no GLB is configured),
   room GLB import + spawn-node auto-frame + ambient audio (see [docs/architecture/room-convention.md](docs/architecture/room-convention.md)).
-  Single model per character — no separate visual/speaking split.
+  Single model per character — no separate visual/speaking split. All animations
+  are retargeted at runtime from the actorcore library via `animationMixer.ts`
+  (`AnimationSlots` holds filenames, not baked indices).
 - **packages/retrieval/** — FastAPI. Corpus ingest (extract -> chunk -> embed,
   format-specific extractors behind a shared seam) is implemented;
   GraphRAG-forward query over the ingested substrate is still stubbed. See
@@ -43,7 +45,7 @@ docker compose up --build retrieval db   # retrieval API + Postgres
 
 ## Tools
 
-- **`/tools/anim-viewer/`** — Animation viewer. Auto-loads the default character on open, plays the first baked animation. 420px sidebar, no horizontal scroll. Inspect baked animation groups by index, preview actorcore library clips retargeted onto the rig, assign animations to named course slots (`idle`, `talk`, `greet`, `explain`, `point`), and copy a ready-to-paste `animationSlots` JSON block. Planned: import wizard to re-run `fbx2glb-avatar.py` with configurable settings from the browser.
+- **`/tools/anim-viewer/`** — Animation viewer. Auto-loads the default character on open, plays the first animation. 420px sidebar, no horizontal scroll. Character faces the camera correctly. Inspect baked animation groups by index, preview actorcore library clips retargeted onto the rig, assign animations to named course slots (`idle`, `talk`, `greet`, `explain`, `point`), and copy a ready-to-paste `animationSlots` JSON block. Planned: import wizard to re-run `fbx2glb-avatar.py` with configurable settings from the browser.
 
 ## Docs
 

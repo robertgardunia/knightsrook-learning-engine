@@ -45,25 +45,22 @@ export interface AvatarConfig {
    * already agrees with the spawn node's authored yaw.
    */
   facingOffsetDegrees?: number
-  /**
-   * Default playback speed for every slot on this character, 1.0 = the
-   * clip's authored speed. ActorCore/CC library animations tend to run fast
-   * across the board, so this is a per-character knob, not a one-off fix —
-   * override individual slots via animationSpeedRatios instead of forcing
-   * every character to the same value.
-   */
-  animationSpeedRatio?: number
-  /** Per-slot override of animationSpeedRatio — takes precedence when set. */
-  animationSpeedRatios?: Partial<Record<keyof AnimationSlots, number>>
 }
 
-/** Exact clip indices, never name regex — see project:learning-demo:spec "Animation slots". */
+/**
+ * Maps slot names to actorcore GLB filenames (relative to
+ * /assets/animations/actorcore/). All animations are retargeted at runtime
+ * via animationMixer.ts — nothing is baked into the avatar GLB.
+ *
+ * talk accepts an array so multiple clips can be cycled randomly during
+ * speech, matching garage's bodyTalkFiles pattern.
+ */
 export interface AnimationSlots {
-  idle: number
-  talk: number
-  greet: number
-  explain: number
-  point: number
+  idle: string
+  talk: string | string[]
+  greet?: string
+  explain?: string
+  point?: string
 }
 
 export interface VoiceConfig {

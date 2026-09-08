@@ -16,7 +16,7 @@ import { AnimationGroup, SceneLoader, type Scene, type TargetedAnimation, type T
 interface LoadResult {
   meshes: { isVisible: boolean }[]
   transformNodes?: TransformNode[]
-  skeletons?: { bones?: { getTransformNode?: () => TransformNode | null }[] }[]
+  skeletons?: ({ bones?: { getTransformNode?: () => TransformNode | null }[] } | null)[]
 }
 
 interface ApplyAnimationOptions {
@@ -121,7 +121,7 @@ export function buildCharNodes(result: LoadResult): Record<string, TransformNode
     nodes[tn.name] = tn
   })
   result.skeletons?.forEach((sk) => {
-    sk.bones?.forEach((bone) => {
+    sk?.bones?.forEach((bone) => {
       const tn = bone.getTransformNode?.()
       if (tn) nodes[tn.name] = tn
     })

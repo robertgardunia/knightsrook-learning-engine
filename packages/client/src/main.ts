@@ -129,7 +129,6 @@ async function main() {
       course.avatar.glbUrl,
       course.avatar.animationSlots,
       (loaded, total) => reportProgress("avatar", loaded, total),
-      { animationSpeedRatio: course.avatar.animationSpeedRatio, animationSpeedRatios: course.avatar.animationSpeedRatios },
     )
     completeLoad("avatar")
 

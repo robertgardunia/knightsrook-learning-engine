@@ -7,10 +7,15 @@
     "ambientAudioUrl": "/assets/audio/music/sci-fi-lab-ambient.mp3"
   },
   "avatar": {
-    "glbUrl": "/assets/avatars/vulcan-tvek/avatar.glb?v=20260907-1613",
+    "glbUrl": "/assets/avatars/vulcan-tvek/avatar.glb",
     "facingOffsetDegrees": 180,
-    "animationSpeedRatio": 0.5,
-    "animationSlots": { "idle": 0, "talk": 1, "greet": 2, "explain": 3, "point": 4 }
+    "animationSlots": {
+      "idle": "main-idle.glb",
+      "talk": ["chat-relax-m.glb", "male-stand-talk-2.glb", "standing_chat_m_270753.glb"],
+      "greet": "idleandmoves-standhandbackidle.glb",
+      "explain": "standingdiscussion_lookingdown_m_270746.glb",
+      "point": "36-both-hands-together-speech.glb"
+    }
   },
   "voice": {
     "elevenLabsAgentId": "agent_8901m1z9an9eezjssgsm2kf189js",
