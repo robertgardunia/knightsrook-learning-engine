@@ -194,6 +194,7 @@ async function playExternal(file: string, loop: boolean, statusEl: HTMLElement):
     loop,
     noHide: true,
     filterRootMotion: true,
+    filterBones: ["clavicle", "scapula"],
   })
 
   if (!group) { statusEl.textContent = `No bones matched for ${file}`; return }

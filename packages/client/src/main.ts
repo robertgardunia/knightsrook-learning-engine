@@ -173,8 +173,8 @@ async function main() {
     { diameter: AVATAR_COLLIDER_DIAMETER, height: AVATAR_COLLIDER_HEIGHT },
     scene,
   )
-  avatarCollider.parent = avatar.root
-  avatarCollider.position = new Vector3(0, AVATAR_COLLIDER_HEIGHT / 2, 0)
+  avatarCollider.position.copyFrom(avatar.root.position)
+  avatarCollider.position.y += 1.0
   avatarCollider.isVisible = false
   avatarCollider.checkCollisions = true
   avatarCollider.isPickable = false

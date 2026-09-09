@@ -101,7 +101,7 @@ export class AvatarController {
       this.charResult,
       `avatar_${slot}`,
       this.scene,
-      { loop: slot === "idle", filterRootMotion: true, noHide: true },
+      { loop: slot === "idle", filterRootMotion: true, noHide: true, filterBones: ["clavicle", "scapula"] },
     )
 
     if (group) this.currentGroup = group
