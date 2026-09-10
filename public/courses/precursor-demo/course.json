@@ -11,7 +11,8 @@
     "facingOffsetDegrees": 180,
     "greetingLine": "Greetings, ensign. Your timing is fortuitous — I was just reviewing the precursor identification data from last week's behavioral assessments. Walk with me.",
     "animationSlots": {
-      "idle": "standingdiscussion_lookingdown_m_270746.glb",
+      "idle": "male-idle_279398.glb",
+      "preGreetIdle": "standingdiscussion_lookingdown_m_270746.glb",
       "talk": ["chat-relax-m.glb", "male-stand-talk-2.glb", "standing_chat_m_270753.glb"],
       "greet": "idleandmoves-standhandbackidle.glb",
       "paddAway": "put-away-tv-remote-m.glb",

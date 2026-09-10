@@ -189,25 +189,41 @@ async function main() {
   async function runGreetingSequence(): Promise<void> {
     if (!(avatar instanceof AvatarController)) return
 
-    // Step 2: put PADD away — play on "base" layer, mirrored to left hand
     if (course.avatar.animationSlots.paddAway) {
-      const paddFile = course.avatar.animationSlots.paddAway
-      const file = Array.isArray(paddFile) ? paddFile[0] : paddFile
-      await avatar.playLayer(file, "base", {
-        boneGroup: "full",
-        mirrorX: true,
-        loop: false,
-        fadeDuration: 400,
-      })
-      const paddDuration = (course.avatar.paddAwayDuration ?? 1.5) * 1000
-      await new Promise((r) => setTimeout(r, paddDuration))
-      avatar.setMeshVisible("padd", false)
-    }
+      const file = Array.isArray(course.avatar.animationSlots.paddAway)
+        ? course.avatar.animationSlots.paddAway[0]
+        : course.avatar.animationSlots.paddAway
 
-    // Step 4: greet — crossfade directly from put-away (or idle if no paddAway)
-    const greetLine = course.avatar.greetingLine ?? course.theme.copyRegister["greeting"] ?? ""
-    if (course.avatar.animationSlots.greet) await avatar.crossfadeToSlot("greet", 500)
-    if (greetLine) await speak(greetLine)
+      // Freeze legs in the pre-greet pose while upper body does the put-away.
+      const preGreetFile = course.avatar.animationSlots.preGreetIdle ?? course.avatar.animationSlots.idle
+      await avatar.playLayer(preGreetFile, "legs", { boneGroup: "lower", loop: true, fadeDuration: 0 })
+
+      // loop=true so Babylon never stops the group mid-crossfade (stopped animatables
+      // are removed from the active list, causing bones to snap to bind pose).
+      await avatar.playLayer(file, "base", {
+        boneGroup: "upper", mirrorX: true, loop: true, fadeDuration: 600,
+      })
+
+      const paddGroup = avatar.getLayer("base")
+      const FADE_IN_MS = 600
+      const FADE_OUT_MS = 400
+      const clipDurationMs = paddGroup
+        ? ((paddGroup.to - paddGroup.from) / 60) * 1000
+        : (course.avatar.paddAwayDuration ?? 1.5) * 1000
+
+      setTimeout(() => avatar.setMeshVisible("padd", false), clipDurationMs * 0.15)
+
+      await new Promise<void>((resolve) =>
+        setTimeout(resolve, Math.max(0, clipDurationMs - FADE_IN_MS - FADE_OUT_MS))
+      )
+
+      await Promise.all([
+        avatar.crossfadeToSlot("idle", FADE_OUT_MS),
+        avatar.stopLayer("legs", FADE_OUT_MS),
+      ])
+    } else {
+      await avatar.crossfadeToSlot("idle", 600)
+    }
 
     // Lesson begins
     await interpreter.run()

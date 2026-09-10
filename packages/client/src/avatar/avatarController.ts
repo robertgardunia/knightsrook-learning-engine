@@ -2,7 +2,7 @@ import { AnimationGroup, SceneLoader, TransformNode, type AbstractMesh, type Mes
 
 import type { AnimationSlots } from "@learning-engine/shared-types"
 
-import { applyAnimation, buildCharNodes, type ApplyAnimationOptions, type BoneGroup } from "./animationMixer"
+import { applyAnimation, getSourceAnimations, buildCharNodes, type ApplyAnimationOptions, type BoneGroup } from "./animationMixer"
 import { correctCCMaterials } from "./ccMaterialCorrection"
 import { DEFAULT_VISEME_MAP, DEFAULT_VISEME_TIMING, initVisemeController } from "./visemeController"
 
@@ -90,7 +90,12 @@ export class AvatarController {
     result.animationGroups?.forEach((g) => { try { g.stop(); g.dispose() } catch { /* ok */ } })
 
     const root = (result.meshes[0] as Mesh) ?? new TransformNode("avatar-root", scene)
-    result.meshes.forEach((m) => (m.isVisible = false))
+    result.meshes.forEach((m) => {
+      m.isVisible = false
+      // Prevent frustum culling from hiding the avatar when bone poses move
+      // the AABB temporarily off-screen (e.g. during animation transitions).
+      if ("alwaysSelectAsActiveMesh" in m) (m as Mesh).alwaysSelectAsActiveMesh = true
+    })
 
     const charResult = {
       meshes: result.meshes,
@@ -115,7 +120,15 @@ export class AvatarController {
     })
 
     const avatar = new AvatarController(root, slots, scene, charResult)
-    await avatar.playSlot("idle")
+    // Start in the pre-greet looking-down clip if provided; fall back to idle.
+    // The proximity trigger will crossfade to idle (neutral) on approach.
+    const startClip = slots.preGreetIdle ?? slots.idle
+    // Warm the idle into cache now so crossfadeToSlot("idle") is instant when
+    // the greeting sequence runs — avoiding an async gap where legs lose their driver.
+    await Promise.all([
+      avatar.playLayer(startClip, "base", { boneGroup: "full", loop: true, fadeDuration: 0 }),
+      getSourceAnimations(ANIM_BASE + slots.idle, scene),
+    ])
     result.meshes.forEach((m) => (m.isVisible = true))
 
     return avatar
@@ -138,7 +151,7 @@ export class AvatarController {
       loop = layerName === "base",
       speedRatio = 1,
       fadeDuration = 400,
-      filterBones = ["clavicle", "scapula"],
+      filterBones = [],
     } = opts
 
     const outgoing = this.layers.get(layerName) ?? null
@@ -159,8 +172,12 @@ export class AvatarController {
     this.layers.set(layerName, incoming)
 
     if (fadeDuration <= 0 || !outgoing) {
+      // Zero the outgoing weight but do NOT call stop()/dispose() — Babylon's
+      // AnimationGroup.stop() calls scene.stopAnimation(bone) for each bone,
+      // which kills ALL animatables targeting that bone including the incoming's.
+      // Leave it at weight=0; it contributes nothing to bone evaluation.
+      outgoing?.setWeightForAllAnimatables(0)
       incoming.setWeightForAllAnimatables(1)
-      if (outgoing) try { outgoing.stop(); outgoing.dispose() } catch { /* ok */ }
       return
     }
 
@@ -173,7 +190,11 @@ export class AvatarController {
         outgoing.setWeightForAllAnimatables(1 - t)
         if (t >= 1) {
           this.scene.onBeforeRenderObservable.remove(obs)
-          try { outgoing.stop(); outgoing.dispose() } catch { /* ok */ }
+          // Do NOT stop/dispose outgoing — see comment above re: scene.stopAnimation.
+          // Zeroed weight means it contributes nothing; zombie groups accumulate
+          // but the per-session count is small enough to ignore.
+          outgoing.setWeightForAllAnimatables(0)
+          incoming.setWeightForAllAnimatables(1)
           resolve()
         }
       })
@@ -189,7 +210,7 @@ export class AvatarController {
     if (!group) return Promise.resolve()
 
     if (fadeDuration <= 0) {
-      try { group.stop(); group.dispose() } catch { /* ok */ }
+      group.setWeightForAllAnimatables(0) // zero, don't stop (see playLayer comment)
       return Promise.resolve()
     }
 
@@ -201,7 +222,7 @@ export class AvatarController {
         group.setWeightForAllAnimatables(startWeight * (1 - t))
         if (t >= 1) {
           this.scene.onBeforeRenderObservable.remove(obs)
-          try { group.stop(); group.dispose() } catch { /* ok */ }
+          group.setWeightForAllAnimatables(0) // zero, don't stop
           resolve()
         }
       })
@@ -235,6 +256,11 @@ export class AvatarController {
       loop: slot === "idle",
       fadeDuration: 0,
     })
+  }
+
+  /** Return the current AnimationGroup for a named layer (null if not playing). */
+  getLayer(layerName: string): AnimationGroup | null {
+    return this.layers.get(layerName) ?? null
   }
 
   /**

@@ -69,6 +69,54 @@ const ANIM_LIBRARY: { label: string; files: string[] }[] = [
     ],
   },
   {
+    label: "Garage Idles",
+    files: [
+      "idle-speaking.glb",
+      "gestures/Style01_Male_idle.glb",
+      "gestures/Style02_Male_idle.glb",
+    ],
+  },
+  {
+    label: "Garage Gestures (Style01)",
+    files: [
+      "active-speaking.glb",
+      "active-speaking-2.glb",
+      "active-speaking-3.glb",
+      "active-speaking-4.glb",
+      "active-speaking-5.glb",
+      "active-speaking-6.glb",
+      "active-speaking-7.glb",
+      "gestures/Style01_Male_talk_FL_01.glb",
+      "gestures/Style01_Male_talk_FL_02.glb",
+      "gestures/Style01_Male_talk_FL_03.glb",
+      "gestures/Style01_Male_talk_FR_01.glb",
+      "gestures/Style01_Male_talk_FR_02.glb",
+      "gestures/Style01_Male_talk_FR_03.glb",
+      "gestures/Style01_Male_talk_FRL_01.glb",
+      "gestures/Style01_Male_talk_FRL_02.glb",
+      "gestures/Style01_Male_talk_FRL_03.glb",
+      "gestures/Style01_Male_talk_FRL_03(0).glb",
+      "gestures/Style01_Male_talk_L_01.glb",
+      "gestures/Style01_Male_talk_R_01.glb",
+    ],
+  },
+  {
+    label: "Garage Gestures (Style02)",
+    files: [
+      "gestures/Style02_Male_talk_FL_01.glb",
+      "gestures/Style02_Male_talk_FL_02.glb",
+      "gestures/Style02_Male_talk_FL_03.glb",
+      "gestures/Style02_Male_talk_FR_01.glb",
+      "gestures/Style02_Male_talk_FR_02.glb",
+      "gestures/Style02_Male_talk_FR_03.glb",
+      "gestures/Style02_Male_talk_FRL_01.glb",
+      "gestures/Style02_Male_talk_FRL_02.glb",
+      "gestures/Style02_Male_talk_FRL_03.glb",
+      "gestures/Style02_Male_talk_L_01.glb",
+      "gestures/Style02_Male_talk_R_01.glb",
+    ],
+  },
+  {
     label: "Walks",
     files: [
       "walk-1start-378927.glb",
@@ -185,10 +233,13 @@ function playBaked(group: AnimationGroup, loop: boolean, statusEl: HTMLElement):
 }
 
 async function playExternal(file: string, loop: boolean, statusEl: HTMLElement): Promise<void> {
-  stopAll()
-
   if (!_charRoot) { statusEl.textContent = "Load a character first"; return }
   statusEl.textContent = `Loading ${file}…`
+
+  // Keep the outgoing animation at weight=1 during async load so bones don't
+  // snap to bind pose (weight=0 on all animatables → Babylon uses rest pose).
+  const outgoingGroups = [..._loadedExtGroups]
+  const outgoingActive = _activeGroup
 
   const charResult = {
     meshes: _charMeshes,
@@ -202,8 +253,12 @@ async function playExternal(file: string, loop: boolean, statusEl: HTMLElement):
     loop,
     noHide: true,
     filterRootMotion: true,
-    filterBones: ["clavicle", "scapula"],
+    filterBones: [],
   })
+
+  // New animation is loaded and playing — now safe to zero the outgoing ones.
+  if (outgoingActive) { try { outgoingActive.setWeightForAllAnimatables(0) } catch { /* ok */ } }
+  outgoingGroups.forEach((g) => { try { g.setWeightForAllAnimatables(0) } catch { /* ok */ } })
 
   if (!group) { statusEl.textContent = `No bones matched for ${file}`; return }
 
@@ -216,8 +271,10 @@ async function playExternal(file: string, loop: boolean, statusEl: HTMLElement):
 }
 
 function stopAll(): void {
-  if (_activeGroup) { try { _activeGroup.stop() } catch { /* ok */ } _activeGroup = null }
-  _loadedExtGroups.forEach((g) => { try { g.stop() } catch { /* ok */ } })
+  // Zero weights instead of stop() — stop() calls scene.stopAnimation(bone) which
+  // removes animatables from the active list, causing a bind-pose snap on the next frame.
+  if (_activeGroup) { try { _activeGroup.setWeightForAllAnimatables(0) } catch { /* ok */ } _activeGroup = null }
+  _loadedExtGroups.forEach((g) => { try { g.setWeightForAllAnimatables(0) } catch { /* ok */ } })
   _loadedExtGroups = []
 }
 
@@ -244,8 +301,13 @@ function buildUI(engine: Engine, scene: Scene): HTMLButtonElement {
   panel.appendChild(subtitle)
 
   const status = document.createElement("div")
-  status.style.cssText =
-    "color: #aaa; font-size: 11px; margin-bottom: 12px; min-height: 32px; line-height: 1.4;"
+  status.style.cssText = `
+    position: sticky; top: 0; z-index: 1;
+    background: rgba(18,18,28,0.97);
+    color: #aaa; font-size: 11px; padding: 6px 0 8px;
+    min-height: 32px; line-height: 1.4;
+    border-bottom: 1px solid #222; margin-bottom: 10px;
+  `
   status.textContent = "Drop a GLB path below to load a character."
   panel.appendChild(status)
 
@@ -308,15 +370,34 @@ function buildUI(engine: Engine, scene: Scene): HTMLButtonElement {
   panel.appendChild(presetEl)
 
   // ── Playback controls ────────────────────────────────────────────────────
+  const toggleRow = document.createElement("div")
+  toggleRow.style.cssText = "display: flex; gap: 16px; margin-bottom: 8px;"
+
   const loopLabel = document.createElement("label")
-  loopLabel.style.cssText =
-    "display: flex; align-items: center; gap: 6px; margin-bottom: 8px; cursor: pointer;"
+  loopLabel.style.cssText = "display: flex; align-items: center; gap: 6px; cursor: pointer;"
   const loopCheck = document.createElement("input")
   loopCheck.type = "checkbox"
   loopCheck.checked = true
   loopLabel.appendChild(loopCheck)
   loopLabel.appendChild(document.createTextNode("Loop"))
-  panel.appendChild(loopLabel)
+  toggleRow.appendChild(loopLabel)
+
+  const paddLabel = document.createElement("label")
+  paddLabel.style.cssText = "display: flex; align-items: center; gap: 6px; cursor: pointer;"
+  const paddCheck = document.createElement("input")
+  paddCheck.type = "checkbox"
+  paddCheck.checked = true
+  paddCheck.onchange = () => {
+    const pattern = "padd"
+    _charMeshes.forEach((m) => {
+      if (m.name?.toLowerCase().includes(pattern)) m.isVisible = paddCheck.checked
+    })
+  }
+  paddLabel.appendChild(paddCheck)
+  paddLabel.appendChild(document.createTextNode("PADD"))
+  toggleRow.appendChild(paddLabel)
+
+  panel.appendChild(toggleRow)
 
   const speedHeader = document.createElement("div")
   speedHeader.textContent = "Speed: 1.0×"

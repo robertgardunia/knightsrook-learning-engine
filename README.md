@@ -19,7 +19,13 @@ learning-demo.knightsrook.com · full spec in Knightsrook MCP:
   (`AnimationSlots` holds filenames, not baked indices). Supports layered
   animation: named layers run concurrently (`playLayer(file, layerName, opts)`)
   with per-layer `boneGroup` masking (upper/lower/arms/legs) and runtime
-  `mirrorX` L↔R flip — no pre-baked mirrored GLBs needed.
+  `mirrorX` L↔R flip — no pre-baked mirrored GLBs needed. Greeting sequence:
+  avatar starts in `preGreetIdle`, crossfades to `paddAway` (upper-body only,
+  lower frozen) on player approach, PADD hides at 15% of clip, then transitions
+  to neutral `idle` — `preGreetIdle` slot is separate from `idle` so lesson beats
+  never revert to the looking-down pose. Garage gesture clips (27 × ~750 KB GLBs)
+  live in `public/assets/animations/actorcore/gestures/`, re-exported from source
+  FBX with full keyframes via Blender NLA + binary t=0 rest-frame strip.
 - **packages/retrieval/** — FastAPI. Corpus ingest (extract -> chunk -> embed,
   format-specific extractors behind a shared seam) is implemented;
   GraphRAG-forward query over the ingested substrate is still stubbed. See

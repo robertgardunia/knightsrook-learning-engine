@@ -1,4 +1,4 @@
-import { Animation, AnimationGroup, SceneLoader, type Scene, type TargetedAnimation, type TransformNode } from "@babylonjs/core"
+import { Animation, AnimationGroup, Quaternion, SceneLoader, Vector3, type Scene, type TargetedAnimation, type TransformNode } from "@babylonjs/core"
 
 /**
  * Loads an animation GLB once per filepath (cached, shared across characters)
@@ -53,7 +53,6 @@ const BIND_POSE_RE = /\b(t[-_]?pose|a[-_]?pose|default|bind|reference|ref)\b/i
 
 async function loadSourceAnimations(filepath: string, scene: Scene): Promise<TargetedAnimation[]> {
   const result = await SceneLoader.ImportMeshAsync("", "", filepath, scene)
-
   const newGroups = result.animationGroups || []
 
   const usable = newGroups.filter((g) => !BIND_POSE_RE.test(g.name))
@@ -71,10 +70,9 @@ async function loadSourceAnimations(filepath: string, scene: Scene): Promise<Tar
 
   const targetedAnims = source ? [...source.targetedAnimations] : []
 
-  newGroups.forEach((g) => {
-    try { g.stop(); g.dispose() } catch { /* ok */ }
-  })
-
+  // Stop and dispose the loaded animation groups, then clean up the skeleton
+  // and meshes — we only need the keyframe data, not the source rig in the scene.
+  newGroups.forEach((g) => { try { g.stop(); g.dispose() } catch { /* ok */ } })
   const animSkels = result.skeletons || []
   const boneNodeIds = new Set<number>()
   for (const sk of animSkels) {
@@ -92,7 +90,7 @@ async function loadSourceAnimations(filepath: string, scene: Scene): Promise<Tar
   return targetedAnims
 }
 
-function getSourceAnimations(filepath: string, scene: Scene): Promise<TargetedAnimation[]> {
+export function getSourceAnimations(filepath: string, scene: Scene): Promise<TargetedAnimation[]> {
   if (!sourceCache.has(filepath)) {
     sourceCache.set(filepath, loadSourceAnimations(filepath, scene))
   }
@@ -152,11 +150,13 @@ function mirrorAnimation(source: Animation): Animation {
   for (const key of keys) {
     const v = key.value
     if (isQuat && v && typeof v === "object" && "w" in v) {
-      // XYZW quaternion — negate Y and Z
-      key.value = { w: v.w, x: v.x, y: -v.y, z: -v.z }
-    } else if (isEuler && v && typeof v === "object" && "x" in v) {
-      // Euler XYZ — negate Y and Z
-      key.value = { x: v.x, y: -v.y, z: -v.z }
+      // Must produce a Quaternion instance (not a plain object) — Babylon's
+      // animation interpolation calls slerp/methods on the value at runtime.
+      // Quaternion constructor order: (x, y, z, w). Mirror X-axis: negate Y and Z.
+      key.value = new Quaternion(v.x, -v.y, -v.z, v.w)
+    } else if (isEuler && v && typeof v === "object" && "x" in v && !("w" in v)) {
+      // Must be Vector3, not plain object.
+      key.value = new Vector3(v.x, -v.y, -v.z)
     }
   }
   clone.setKeys(keys)
@@ -214,16 +214,22 @@ export async function applyAnimation(
       if (filterBones.some((f) => lower.includes(f))) continue
     }
 
-    // filterRootMotion: drop position/scale tracks
+    // filterRootMotion: drop position/scale tracks, and also rotation on the
+    // root bone (CC_Base_BoneRoot) which drives world-space character movement.
     if (filterRootMotion) {
       const prop = (ta.animation?.targetProperty || "").toLowerCase()
       if (prop === "scaling" || prop.startsWith("scaling")) continue
       if (prop === "position" || prop.startsWith("position")) continue
+      if (/boneroot/i.test(sourceBoneName) && prop.includes("rotation")) continue
     }
 
-    // For mirrorX: resolve the mirrored source bone name to get the right anim data,
-    // but target it onto the swapped character bone.
-    const targetBoneName = mirrorX ? (mirrorBoneName(sourceBoneName) ?? sourceBoneName) : sourceBoneName
+    // For mirrorX: swap L↔R bone targets.
+    const mirroredName = mirrorX ? mirrorBoneName(sourceBoneName) : null
+    const targetBoneName = mirroredName ?? sourceBoneName
+    // Only negate quaternion components when the bone is actually being swapped
+    // L↔R — non-paired bones (spine, hip, head, root) pass their animation
+    // data through unchanged to avoid extreme poses that trigger frustum culling.
+    const shouldMirrorAnim = mirroredName !== null
 
     // boneGroup filter — applied to the TARGET bone name (after mirror swap)
     if (groupPatterns) {
@@ -233,7 +239,7 @@ export async function applyAnimation(
 
     const charBone = resolveCharBone(charNodes, targetBoneName)
     if (charBone && ta.animation) {
-      const anim = mirrorX ? mirrorAnimation(ta.animation) : ta.animation
+      const anim = shouldMirrorAnim ? mirrorAnimation(ta.animation) : ta.animation
       retargeted.addTargetedAnimation(anim, charBone)
       mapped++
     }

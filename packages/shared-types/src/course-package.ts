@@ -61,6 +61,7 @@ export interface AvatarConfig {
  */
 export interface AnimationSlots {
   idle: string
+  preGreetIdle?: string
   talk: string | string[]
   greet?: string
   explain?: string
