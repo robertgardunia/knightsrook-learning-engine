@@ -16,7 +16,10 @@ learning-demo.knightsrook.com · full spec in Knightsrook MCP:
   room GLB import + spawn-node auto-frame + ambient audio (see [docs/architecture/room-convention.md](docs/architecture/room-convention.md)).
   Single model per character — no separate visual/speaking split. All animations
   are retargeted at runtime from the actorcore library via `animationMixer.ts`
-  (`AnimationSlots` holds filenames, not baked indices).
+  (`AnimationSlots` holds filenames, not baked indices). Supports layered
+  animation: named layers run concurrently (`playLayer(file, layerName, opts)`)
+  with per-layer `boneGroup` masking (upper/lower/arms/legs) and runtime
+  `mirrorX` L↔R flip — no pre-baked mirrored GLBs needed.
 - **packages/retrieval/** — FastAPI. Corpus ingest (extract -> chunk -> embed,
   format-specific extractors behind a shared seam) is implemented;
   GraphRAG-forward query over the ingested substrate is still stubbed. See

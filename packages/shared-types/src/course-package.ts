@@ -45,6 +45,10 @@ export interface AvatarConfig {
    * already agrees with the spawn node's authored yaw.
    */
   facingOffsetDegrees?: number
+  /** Spoken line delivered during the proximity greeting, before the lesson starts. */
+  greetingLine?: string
+  /** How many seconds the paddAway animation plays before PADD is hidden. Default 1.5. */
+  paddAwayDuration?: number
 }
 
 /**
@@ -61,6 +65,7 @@ export interface AnimationSlots {
   greet?: string
   explain?: string
   point?: string
+  paddAway?: string
 }
 
 export interface VoiceConfig {

@@ -179,6 +179,40 @@ async function main() {
   avatarCollider.checkCollisions = true
   avatarCollider.isPickable = false
 
+  // ── Proximity greeting ────────────────────────────────────────────────────
+  // Fires once when the player walks within range of the avatar. Runs the
+  // pre-lesson sequence (PADD away → neutral stance → spoken greeting), then
+  // hands off to the LessonInterpreter.
+  const GREETING_TRIGGER_DISTANCE = 3.5
+  let greetingTriggered = false
+
+  async function runGreetingSequence(): Promise<void> {
+    if (!(avatar instanceof AvatarController)) return
+
+    // Step 2: put PADD away — play on "base" layer, mirrored to left hand
+    if (course.avatar.animationSlots.paddAway) {
+      const paddFile = course.avatar.animationSlots.paddAway
+      const file = Array.isArray(paddFile) ? paddFile[0] : paddFile
+      await avatar.playLayer(file, "base", {
+        boneGroup: "full",
+        mirrorX: true,
+        loop: false,
+        fadeDuration: 400,
+      })
+      const paddDuration = (course.avatar.paddAwayDuration ?? 1.5) * 1000
+      await new Promise((r) => setTimeout(r, paddDuration))
+      avatar.setMeshVisible("padd", false)
+    }
+
+    // Step 4: greet — crossfade directly from put-away (or idle if no paddAway)
+    const greetLine = course.avatar.greetingLine ?? course.theme.copyRegister["greeting"] ?? ""
+    if (course.avatar.animationSlots.greet) await avatar.crossfadeToSlot("greet", 500)
+    if (greetLine) await speak(greetLine)
+
+    // Lesson begins
+    await interpreter.run()
+  }
+
   const hooks: LessonInterpreterHooks = {
     playAnimationSlot: async (slot) => {
       await avatar?.playSlot(slot)
@@ -205,12 +239,19 @@ async function main() {
   }
 
   const interpreter = new LessonInterpreter(course.lesson, hooks)
-  await interpreter.run()
 
   let audioWasPlaying = false
   let decayTailStart = 0
 
   engine.runRenderLoop(() => {
+    if (!greetingTriggered) {
+      const dist = Vector3.Distance(camera.position, avatar.root.position)
+      if (dist < GREETING_TRIGGER_DISTANCE) {
+        greetingTriggered = true
+        void runGreetingSequence()
+      }
+    }
+
     const { isActive, audioStartTime, visemeData, now: audioNow } = getAudioState()
 
     if (isActive) {

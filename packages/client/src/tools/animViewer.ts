@@ -61,6 +61,14 @@ const ANIM_LIBRARY: { label: string; files: string[] }[] = [
     ],
   },
   {
+    label: "Props",
+    files: [
+      "lay-down-tv-remote-m.glb",
+      "put-away-tv-remote-m.glb",
+      "put-away-tv-remote-left-m.glb",
+    ],
+  },
+  {
     label: "Walks",
     files: [
       "walk-1start-378927.glb",
