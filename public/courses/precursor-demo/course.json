@@ -11,13 +11,13 @@
     "facingOffsetDegrees": 180,
     "greetingLine": "Greetings, ensign. Your timing is fortuitous — I was just reviewing the precursor identification data from last week's behavioral assessments. Walk with me.",
     "animationSlots": {
-      "idle": "male-idle_279398.glb",
-      "preGreetIdle": "standingdiscussion_lookingdown_m_270746.glb",
-      "talk": ["chat-relax-m.glb", "male-stand-talk-2.glb", "standing_chat_m_270753.glb"],
-      "greet": "idleandmoves-standhandbackidle.glb",
-      "paddAway": "put-away-tv-remote-m.glb",
-      "explain": "standingdiscussion_lookingdown_m_270746.glb",
-      "point": "36-both-hands-together-speech.glb"
+      "idle": "idles/male-idle_279398.glb",
+      "preGreetIdle": "idles/standingdiscussion_lookingdown_m_270746.glb",
+      "talk": ["talks/chat-relax-m.glb", "talks/male-stand-talk-2.glb", "talks/standing_chat_m_270753.glb"],
+      "greet": "idles/idleandmoves-standhandbackidle.glb",
+      "paddAway": "props/put-away-tv-remote-m.glb",
+      "explain": "idles/standingdiscussion_lookingdown_m_270746.glb",
+      "point": "talks/36-both-hands-together-speech.glb"
     }
   },
   "voice": {

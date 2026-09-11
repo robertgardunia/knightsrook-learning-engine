@@ -54,7 +54,7 @@ docker compose up --build retrieval db   # retrieval API + Postgres
 
 ## Tools
 
-- **`/tools/anim-viewer/`** — Animation viewer. Auto-loads the default character, plays a default actorcore idle, character orientation matches the live scene. 420px sidebar, no horizontal scroll. Inspect baked animation groups by index, preview actorcore library clips retargeted onto the rig, assign animations to named course slots (`idle`, `talk`, `greet`, `explain`, `point`), and copy a ready-to-paste `animationSlots` JSON block. Clavicle/scapula bones filtered from retargeting to reduce clothing seam artifacts on Daz-origin garments.
+- **`/tools/anim-viewer/`** — Animation viewer. Auto-loads the default character, plays a default actorcore idle, character orientation matches the live scene. 420px sidebar, no horizontal scroll. Inspect baked animation groups by index, preview actorcore library clips retargeted onto the rig, assign animations to named course slots (`idle`, `talk`, `greet`, `explain`, `point`), and copy a ready-to-paste `animationSlots` JSON block. Clavicle/scapula bones filtered from retargeting to reduce clothing seam artifacts on Daz-origin garments. Animation list is dynamic — served by a Vite dev-server middleware (`/api/anim-list`) that scans `public/assets/animations/actorcore/` at request time, grouped by subfolder.
 
 ## Docs
 

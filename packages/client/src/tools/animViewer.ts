@@ -33,102 +33,27 @@ import { correctCCMaterials } from "../avatar/ccMaterialCorrection"
 
 const ANIM_DIR = "/assets/animations/actorcore/"
 
-const ANIM_LIBRARY: { label: string; files: string[] }[] = [
-  {
-    label: "Idles",
-    files: [
-      "main-idle.glb",
-      "idle-random-01.glb",
-      "idleandmoves-standhandbackidle.glb",
-      "arrogant-stand-idle-m.glb",
-      "male-idle_279398.glb",
-    ],
-  },
-  {
-    label: "Talks / Chat",
-    files: [
-      "male-stand-talk-2.glb",
-      "chat-relax-m.glb",
-      "chat-relax-f.glb",
-      "arrogant-chat-m.glb",
-      "3stand-chat-g1-m2.glb",
-      "3stand-chat-g1-f1.glb",
-      "3stand-chat-g2-m1.glb",
-      "standing_chat_m_270753.glb",
-      "standingdiscussion_lookingdown_m_270746.glb",
-      "desk_talkover_m_270698.glb",
-      "36-both-hands-together-speech.glb",
-    ],
-  },
-  {
-    label: "Props",
-    files: [
-      "lay-down-tv-remote-m.glb",
-      "put-away-tv-remote-m.glb",
-      "put-away-tv-remote-left-m.glb",
-    ],
-  },
-  {
-    label: "Garage Idles",
-    files: [
-      "idle-speaking.glb",
-      "gestures/Style01_Male_idle.glb",
-      "gestures/Style02_Male_idle.glb",
-    ],
-  },
-  {
-    label: "Garage Gestures (Style01)",
-    files: [
-      "active-speaking.glb",
-      "active-speaking-2.glb",
-      "active-speaking-3.glb",
-      "active-speaking-4.glb",
-      "active-speaking-5.glb",
-      "active-speaking-6.glb",
-      "active-speaking-7.glb",
-      "gestures/Style01_Male_talk_FL_01.glb",
-      "gestures/Style01_Male_talk_FL_02.glb",
-      "gestures/Style01_Male_talk_FL_03.glb",
-      "gestures/Style01_Male_talk_FR_01.glb",
-      "gestures/Style01_Male_talk_FR_02.glb",
-      "gestures/Style01_Male_talk_FR_03.glb",
-      "gestures/Style01_Male_talk_FRL_01.glb",
-      "gestures/Style01_Male_talk_FRL_02.glb",
-      "gestures/Style01_Male_talk_FRL_03.glb",
-      "gestures/Style01_Male_talk_FRL_03(0).glb",
-      "gestures/Style01_Male_talk_L_01.glb",
-      "gestures/Style01_Male_talk_R_01.glb",
-    ],
-  },
-  {
-    label: "Garage Gestures (Style02)",
-    files: [
-      "gestures/Style02_Male_talk_FL_01.glb",
-      "gestures/Style02_Male_talk_FL_02.glb",
-      "gestures/Style02_Male_talk_FL_03.glb",
-      "gestures/Style02_Male_talk_FR_01.glb",
-      "gestures/Style02_Male_talk_FR_02.glb",
-      "gestures/Style02_Male_talk_FR_03.glb",
-      "gestures/Style02_Male_talk_FRL_01.glb",
-      "gestures/Style02_Male_talk_FRL_02.glb",
-      "gestures/Style02_Male_talk_FRL_03.glb",
-      "gestures/Style02_Male_talk_L_01.glb",
-      "gestures/Style02_Male_talk_R_01.glb",
-    ],
-  },
-  {
-    label: "Walks",
-    files: [
-      "walk-1start-378927.glb",
-      "walk-2loop-379004.glb",
-      "walk-3end-378983.glb",
-      "walk-relaxed-start-378926.glb",
-      "walk-relaxed-loop-378936.glb",
-      "walk-relaxed-end-378960.glb",
-      "30-texting-walk.glb",
-    ],
-  },
-]
+// Animation library is built dynamically by fetching /api/anim-list (a Vite
+// dev-server middleware that reads the filesystem). Any GLB added to
+// public/assets/animations/actorcore/ shows up on next page load.
+let ANIM_LIBRARY: { label: string; files: string[] }[] = []
+
+async function loadAnimLibrary(): Promise<void> {
+  try {
+    const res = await fetch("/api/anim-list")
+    const files: string[] = await res.json()
+    const groups = new Map<string, string[]>()
+    for (const rel of files.sort()) {
+      const slash = rel.lastIndexOf("/")
+      const group = slash === -1 ? "(root)" : rel.slice(0, slash)
+      if (!groups.has(group)) groups.set(group, [])
+      groups.get(group)!.push(rel)
+    }
+    ANIM_LIBRARY = Array.from(groups.entries()).map(([dir, f]) => ({ label: dir, files: f }))
+  } catch (e) {
+    console.warn("[animViewer] Failed to load anim list:", e)
+  }
+}
 
 // Named slots — matches the AnimationSlots type in shared-types
 const SLOT_NAMES = ["idle", "talk", "greet", "explain", "point"] as const
@@ -339,7 +264,7 @@ function buildUI(engine: Engine, scene: Scene): HTMLButtonElement {
       const baked = await loadCharacter(scene, p)
       rebuildBakedSection(baked)
       status.textContent = `Loaded — playing default idle…`
-      await playExternal("standingdiscussion_lookingdown_m_270746.glb", true, status)
+      await playExternal("idles/standingdiscussion_lookingdown_m_270746.glb", true, status)
     } catch (e) {
       status.textContent = `Error: ${String(e)}`
     }
@@ -505,16 +430,25 @@ function buildUI(engine: Engine, scene: Scene): HTMLButtonElement {
 
   // ── Actorcore library ────────────────────────────────────────────────────
   sectionHeader(panel, "Actorcore Library", "#8af")
+  const animLibContainer = document.createElement("div")
+  animLibContainer.textContent = "Loading…"
+  animLibContainer.style.color = "#666"
+  panel.appendChild(animLibContainer)
 
-  for (const cat of ANIM_LIBRARY) {
-    sectionHeader(panel, `${cat.label} (${cat.files.length})`, "#68a", "12px")
-    for (const file of cat.files) {
-      const btn = makeBtn(file.replace(".glb", ""), "#1a1a2a", "#aac")
-      btn.style.fontSize = "11px"
-      btn.onclick = () => { void playExternal(file, loopCheck.checked, status) }
-      panel.appendChild(btn)
+  function rebuildAnimLib(): void {
+    animLibContainer.innerHTML = ""
+    for (const cat of ANIM_LIBRARY) {
+      sectionHeader(animLibContainer, `${cat.label} (${cat.files.length})`, "#68a", "12px")
+      for (const file of cat.files) {
+        const btn = makeBtn(file.replace(".glb", ""), "#1a1a2a", "#aac")
+        btn.style.fontSize = "11px"
+        btn.onclick = () => { void playExternal(file, loopCheck.checked, status) }
+        animLibContainer.appendChild(btn)
+      }
     }
   }
+
+  void loadAnimLibrary().then(() => rebuildAnimLib())
 
   // ── Helpers ──────────────────────────────────────────────────────────────
 
