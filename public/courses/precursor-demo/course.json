@@ -14,7 +14,7 @@
       "idle": "idles/male-idle_279398.glb",
       "preGreetIdle": "idles/standingdiscussion_lookingdown_m_270746.glb",
       "talk": ["talks/chat-relax-m.glb", "talks/male-stand-talk-2.glb", "talks/standing_chat_m_270753.glb"],
-      "greet": "idles/idleandmoves-standhandbackidle.glb",
+      "greet": "gestures/Armature_Vulcan_salute.glb",
       "paddAway": "props/put-away-tv-remote-m.glb",
       "explain": "idles/standingdiscussion_lookingdown_m_270746.glb",
       "point": "talks/36-both-hands-together-speech.glb"

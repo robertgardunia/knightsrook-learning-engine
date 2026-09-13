@@ -3,7 +3,8 @@ import "@babylonjs/loaders/glTF"
 
 import { AvatarController } from "./avatar/avatarController"
 import { clampVisemeMorphs, visemeRenderController } from "./avatar/visemeController"
-import { configureSpeech, getAudioState, speak } from "./avatar/speechController"
+import { getAudioState, speak, waitForSpeechEnd } from "./avatar/speechController"
+import { configureConvai, connectConvai } from "./avatar/convaiClient"
 import { PrimitiveStandIn } from "./avatar/primitiveStandIn"
 import { DevPanel } from "./devtools/devPanel"
 import { loadConfig } from "./lib/config"
@@ -132,8 +133,8 @@ async function main() {
     )
     completeLoad("avatar")
 
-    if (config.elevenLabsApiKey && course.voice?.voiceId) {
-      configureSpeech({ apiKey: config.elevenLabsApiKey, voiceId: course.voice.voiceId })
+    if (course.voice?.elevenLabsAgentId) {
+      configureConvai({ agentId: course.voice.elevenLabsAgentId })
     }
   } else {
     avatar = new PrimitiveStandIn(scene, "avatar")
@@ -218,12 +219,22 @@ async function main() {
       )
 
       await Promise.all([
-        avatar.crossfadeToSlot("idle", FADE_OUT_MS),
+        avatar.playLayer(course.avatar.animationSlots.greet ?? (course.avatar.animationSlots.idle as string), "base", {
+          boneGroup: "full", loop: true, fadeDuration: FADE_OUT_MS,
+        }),
         avatar.stopLayer("legs", FADE_OUT_MS),
       ])
     } else {
-      await avatar.crossfadeToSlot("idle", 600)
+      await avatar.playLayer(course.avatar.animationSlots.greet ?? (course.avatar.animationSlots.idle as string), "base", {
+        boneGroup: "full", loop: true, fadeDuration: 600,
+      })
     }
+
+    // Connect ConvAI now — agent's first_message plays as the greeting while salute holds
+    await connectConvai().catch((err) => console.warn("[ConvAI] connect failed:", err))
+    await waitForSpeechEnd()
+
+    await avatar.crossfadeToSlot("idle", 600)
 
     // Lesson begins
     await interpreter.run()

@@ -219,10 +219,12 @@ function speakImmediate(text: string): Promise<void> {
 
     ws.onclose = () => {
       ws = null
-      isSpeaking = false
       const waitMs = Math.max(0, nextPlayTime - now()) * 1000 + 100
-      setTimeout(processQueue, Math.min(waitMs, 30000))
-      resolve()
+      setTimeout(() => {
+        isSpeaking = false
+        processQueue()
+        resolve()
+      }, Math.min(waitMs, 30000))
     }
 
     ws.onerror = () => {
@@ -258,8 +260,81 @@ export async function speak(text: string): Promise<void> {
   return speakImmediate(t)
 }
 
+// --- ConvAI direct audio path (ported from garage chatOverlayOM.js) ---
+
+const _pendingChunks: string[] = []
+let _convAIActive = false
+let _convAICleanupTimer: ReturnType<typeof setTimeout> | null = null
+
+function buildEnergyVisemes(b64: string, utteranceStart: number, durationSec: number): VisemeEvent[] {
+  const SAMPLE_RATE = 16000
+  const WINDOW_SEC = 0.035
+  const WINDOW_SAMPLES = Math.floor(SAMPLE_RATE * WINDOW_SEC)
+  const SILENCE_THRESHOLD = 0.12
+  const bytes = atob(b64)
+  const numSamples = Math.floor(bytes.length / 2)
+  const events: VisemeEvent[] = []
+  for (let w = 0; w * WINDOW_SAMPLES < numSamples; w++) {
+    const sStart = w * WINDOW_SAMPLES
+    const sEnd = Math.min(sStart + WINDOW_SAMPLES, numSamples)
+    let sumSq = 0
+    for (let j = sStart; j < sEnd; j++) {
+      let s = bytes.charCodeAt(j * 2) | (bytes.charCodeAt(j * 2 + 1) << 8)
+      if (s > 32767) s -= 65536
+      sumSq += s * s
+    }
+    const normalized = Math.min(1, Math.sqrt(sumSq / (sEnd - sStart)) / 10000)
+    if (normalized > SILENCE_THRESHOLD) {
+      const tStart = utteranceStart + w * WINDOW_SEC
+      const tEnd = Math.min(utteranceStart + durationSec, tStart + WINDOW_SEC)
+      events.push({ start: tStart, end: tEnd, value: normalized > 0.45 ? "AH" : "HH" })
+    }
+  }
+  return events
+}
+
+export function processConvAIChunk(audioBase64: string | null, alignmentData: any): void {
+  if (!audioBase64) return
+
+  if (!alignmentData) {
+    _pendingChunks.push(audioBase64)
+    return
+  }
+
+  for (const pending of _pendingChunks) {
+    enqueuePCM16Base64(pending)
+  }
+  _pendingChunks.length = 0
+
+  const info = enqueuePCM16Base64(audioBase64)
+
+  if (!_convAIActive) {
+    _convAIActive = true
+    isSpeaking = true
+    speechStartTime = info.startAt
+    visemeData = []
+  }
+
+  const align = extractAlignment({ alignment: alignmentData })
+  const events = align ? buildVisemeEvents(align, info.startAt, info.durationSec) : []
+  visemeData.push(...(events.length > 0 ? events : buildEnergyVisemes(audioBase64, info.startAt, info.durationSec)))
+
+  if (_convAICleanupTimer) clearTimeout(_convAICleanupTimer)
+  const waitMs = Math.max(0, (nextPlayTime - now()) * 1000) + 200
+  _convAICleanupTimer = setTimeout(() => {
+    _convAICleanupTimer = null
+    _convAIActive = false
+    isSpeaking = false
+    _pendingChunks.length = 0
+    processQueue()
+  }, Math.min(waitMs, 30000))
+}
+
 export function interruptSpeech(): void {
   speechQueue.length = 0
+  _pendingChunks.length = 0
+  _convAIActive = false
+  if (_convAICleanupTimer) { clearTimeout(_convAICleanupTimer); _convAICleanupTimer = null }
   for (const src of activeSources) {
     try { src.stop() } catch { /* already stopped */ }
   }
@@ -270,6 +345,19 @@ export function interruptSpeech(): void {
   speechStartTime = 0
   nextPlayTime = 0
   visemeData = []
+}
+
+export function waitForSpeechEnd(): Promise<void> {
+  return new Promise((resolve) => {
+    const check = () => {
+      if (!isSpeaking && (audioContext === null || now() >= nextPlayTime)) {
+        resolve()
+      } else {
+        setTimeout(check, 100)
+      }
+    }
+    check()
+  })
 }
 
 export function getAudioState() {

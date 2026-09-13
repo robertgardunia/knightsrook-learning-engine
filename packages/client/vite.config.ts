@@ -26,17 +26,40 @@ export default defineConfig({
       "/api/retrieval": { target: "http://localhost:5110", changeOrigin: true },
     },
   },
+  build: {
+    rollupOptions: {
+      external: ["events", "crypto", "http", "https", "os", "fs", "path", "stream", "zlib", "querystring", "timers"],
+    },
+  },
   plugins: [
     {
-      name: "anim-list",
+      name: "dev-api",
       configureServer(server) {
-        // Serve a dynamic JSON listing of all GLBs under public/assets/animations/actorcore/
-        // so the anim-viewer can build its UI without a hardcoded file list.
         server.middlewares.use("/api/anim-list", (_req, res) => {
           const animDir = path.resolve(__dirname, "../../public/assets/animations/actorcore")
           const files = listGlbs(animDir)
           res.setHeader("Content-Type", "application/json")
           res.end(JSON.stringify(files))
+        })
+
+        // Proxy signed ConvAI URL requests so the ElevenLabs API key stays server-side.
+        server.middlewares.use("/api/convai-signed-url", async (req, res) => {
+          const apiKey = process.env.ELEVENLABS_API_KEY
+          if (!apiKey) { res.statusCode = 503; res.end(JSON.stringify({ error: "ELEVENLABS_API_KEY not set" })); return }
+          const url = new URL("http://localhost" + req.url!)
+          const agentId = url.searchParams.get("agent_id") ?? ""
+          if (!agentId) { res.statusCode = 400; res.end(JSON.stringify({ error: "agent_id required" })); return }
+          try {
+            const upstream = await fetch(
+              `https://api.elevenlabs.io/v1/convai/conversation/get-signed-url?agent_id=${encodeURIComponent(agentId)}`,
+              { method: "GET", headers: { "xi-api-key": apiKey } }
+            )
+            const data = await upstream.json() as any
+            res.setHeader("Content-Type", "application/json")
+            res.end(JSON.stringify(data))
+          } catch (e) {
+            res.statusCode = 502; res.end(JSON.stringify({ error: String(e) }))
+          }
         })
       },
     },
